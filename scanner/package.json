@@ -1,0 +1,17 @@
+{
+  "name": "b442wp-scanner",
+  "version": "1.0.0",
+  "description": "Automatic style scanner for Base44 → WordPress converter. Extracts computed typography and color tokens from a live Base44 URL without requiring manual DevTools inspection.",
+  "main": "scan-styles.js",
+  "scripts": {
+    "scan": "node scan-styles.js",
+    "scan:full": "node scan-styles.js $URL scan-output.json && node generate-css-vars.js scan-output.json"
+  },
+  "optionalDependencies": {
+    "puppeteer": "^21.0.0"
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  },
+  "license": "GPL-2.0-or-later"
+}

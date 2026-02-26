@@ -1,0 +1,1685 @@
+/* ==========================================================================
+   Screwed TOS Scan — Theme Stylesheet
+   "How Screwed Am I?" — App Landing Page Theme
+   ========================================================================== */
+
+/* ==========================================================================
+   1. CSS Custom Properties
+   ========================================================================== */
+
+:root {
+  /* Colors — Orange */
+  --screwed-orange:        #e8983f;
+  --screwed-orange-alt:    #F7941D;
+  --screwed-orange-dark:   #d4882f;
+  --screwed-orange-dark-alt: #F15A24;
+
+  /* Colors — Backgrounds */
+  --screwed-cream:         #fcf7ee;
+  --screwed-surface:       #F7F7FC;
+  --screwed-dark-bg:       #111827;
+  --screwed-darker-bg:     #030712;
+
+  /* Colors — Text */
+  --screwed-navy:          #1B2A5C;
+  --screwed-muted:         #6b7280;
+  --screwed-light-text:    #9ca3af;
+  --screwed-white:         #ffffff;
+
+  /* Colors — Borders / UI */
+  --screwed-border:        #E5E5F0;
+  --screwed-border-dark:   rgba(255, 255, 255, 0.1);
+
+  /* Typography */
+  --screwed-font-sans:     ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji";
+
+  /* Spacing scale */
+  --screwed-space-xs:      0.25rem;
+  --screwed-space-sm:      0.5rem;
+  --screwed-space-md:      1rem;
+  --screwed-space-lg:      1.5rem;
+  --screwed-space-xl:      2rem;
+  --screwed-space-2xl:     3rem;
+  --screwed-space-3xl:     4rem;
+  --screwed-space-4xl:     5rem;
+  --screwed-space-5xl:     7rem;
+
+  /* Border radius */
+  --screwed-radius-sm:     0.375rem;
+  --screwed-radius-md:     0.75rem;
+  --screwed-radius-lg:     1rem;
+  --screwed-radius-xl:     1.5rem;
+  --screwed-radius-full:   9999px;
+
+  /* Shadows */
+  --screwed-shadow-sm:     0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --screwed-shadow-md:     0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+  --screwed-shadow-lg:     0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
+  --screwed-shadow-xl:     0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+  --screwed-shadow-orange: 0 0 20px rgba(232, 152, 63, 0.4);
+
+  /* Transitions */
+  --screwed-transition-fast:   all 0.15s ease;
+  --screwed-transition-base:   all 0.2s ease;
+  --screwed-transition-slow:   all 0.3s ease;
+  --screwed-transition-xslow:  all 0.6s ease;
+
+  /* Z-index layers */
+  --screwed-z-header:      1000;
+  --screwed-z-mobile-nav:  1100;
+  --screwed-z-overlay:     900;
+}
+
+/* ==========================================================================
+   2. HTML Preflight
+   ========================================================================== */
+
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust:         100%;
+  scroll-behavior:          smooth;
+  font-size:                16px;
+  line-height:              1.5;
+  tab-size:                 4;
+}
+
+body {
+  -webkit-font-smoothing:  antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering:          optimizeLegibility;
+  margin:                  0;
+  padding:                 0;
+  font-family:             var(--screwed-font-sans);
+  font-size:               1.125rem;
+  font-weight:             400;
+  line-height:             1.625;
+  color:                   var(--screwed-navy);
+  background-color:        var(--screwed-white);
+  overflow-x:              hidden;
+}
+
+/* ==========================================================================
+   3. Box-Sizing Reset
+   ========================================================================== */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+/* ==========================================================================
+   4. Base Element Resets
+   ========================================================================== */
+
+h1, h2, h3, h4, h5, h6 {
+  margin-top:    0;
+  margin-bottom: 0;
+  font-family:   var(--screwed-font-sans);
+  line-height:   1.2;
+}
+
+p {
+  margin-top:    0;
+  margin-bottom: 0;
+}
+
+ul, ol {
+  margin:  0;
+  padding: 0;
+}
+
+a {
+  color:           inherit;
+  text-decoration: none;
+}
+
+img,
+svg {
+  display:   block;
+  max-width: 100%;
+}
+
+button {
+  cursor:     pointer;
+  border:     none;
+  background: none;
+  padding:    0;
+  font:       inherit;
+}
+
+/* ==========================================================================
+   5. Header (.screwed-header)
+   ========================================================================== */
+
+.screwed-header {
+  position:         fixed;
+  top:              0;
+  left:             0;
+  right:            0;
+  width:            100%;
+  z-index:          var(--screwed-z-header);
+  padding:          1rem 2rem;
+  display:          flex;
+  align-items:      center;
+  justify-content:  space-between;
+  background-color: transparent;
+  box-shadow:       none;
+  transition:       background-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.screwed-header--scrolled {
+  background-color: var(--screwed-white);
+  box-shadow:       0 1px 0 0 var(--screwed-border),
+                    0 4px 16px -2px rgba(0, 0, 0, 0.08);
+}
+
+/* ==========================================================================
+   6. Logo (.screwed-logo)
+   ========================================================================== */
+
+.screwed-logo {
+  display:         flex;
+  align-items:     center;
+  gap:             0.625rem;
+  font-weight:     900;
+  font-size:       1.125rem;
+  color:           var(--screwed-white);
+  text-decoration: none;
+  letter-spacing:  -0.015em;
+  transition:      color 0.2s ease, opacity 0.2s ease;
+  white-space:     nowrap;
+}
+
+.screwed-logo:hover {
+  opacity: 0.85;
+}
+
+.screwed-logo__icon {
+  display:          flex;
+  align-items:      center;
+  justify-content:  center;
+  width:            2rem;
+  height:           2rem;
+  background:       var(--screwed-orange);
+  border-radius:    var(--screwed-radius-sm);
+  font-size:        1.125rem;
+  line-height:      1;
+  flex-shrink:      0;
+}
+
+.screwed-logo__text {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.1;
+}
+
+.screwed-logo__sub {
+  font-size:   0.625rem;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  opacity: 0.7;
+}
+
+/* When header is scrolled, logo text becomes navy */
+.screwed-header--scrolled .screwed-logo {
+  color: var(--screwed-navy);
+}
+
+/* ==========================================================================
+   7. Nav (.screwed-nav)
+   ========================================================================== */
+
+.screwed-nav {
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+}
+
+.screwed-nav__list {
+  display:     flex;
+  align-items: center;
+  gap:         2rem;
+  list-style:  none;
+  margin:      0;
+  padding:     0;
+}
+
+.screwed-nav__item {
+  list-style: none;
+}
+
+.screwed-nav__link {
+  font-weight:     500;
+  font-size:       0.875rem;
+  color:           rgba(255, 255, 255, 0.85);
+  text-decoration: none;
+  letter-spacing:  0.01em;
+  padding:         0.25rem 0;
+  position:        relative;
+  transition:      color 0.2s ease;
+}
+
+.screwed-nav__link::after {
+  content:          '';
+  position:         absolute;
+  bottom:           -2px;
+  left:             0;
+  right:            0;
+  height:           2px;
+  background:       var(--screwed-orange);
+  border-radius:    1px;
+  transform:        scaleX(0);
+  transform-origin: left center;
+  transition:       transform 0.2s ease;
+}
+
+.screwed-nav__link:hover {
+  color: var(--screwed-orange);
+}
+
+.screwed-nav__link:hover::after,
+.screwed-nav__link--active::after {
+  transform: scaleX(1);
+}
+
+.screwed-nav__link--active {
+  color: var(--screwed-orange);
+}
+
+/* Scrolled state nav link colors */
+.screwed-header--scrolled .screwed-nav__link {
+  color: var(--screwed-navy);
+}
+
+.screwed-header--scrolled .screwed-nav__link:hover,
+.screwed-header--scrolled .screwed-nav__link--active {
+  color: var(--screwed-orange);
+}
+
+/* Nav CTA button */
+.screwed-nav__cta {
+  display:          inline-flex;
+  align-items:      center;
+  gap:              0.5rem;
+  padding:          0.5rem 1.125rem;
+  background:       var(--screwed-orange);
+  color:            var(--screwed-white);
+  font-weight:      600;
+  font-size:        0.875rem;
+  border-radius:    var(--screwed-radius-full);
+  text-decoration:  none;
+  transition:       background-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+  white-space:      nowrap;
+}
+
+.screwed-nav__cta:hover {
+  background:  var(--screwed-orange-dark);
+  box-shadow:  var(--screwed-shadow-orange);
+  transform:   translateY(-1px);
+}
+
+/* ==========================================================================
+   8. Mobile Toggle (.screwed-menu-toggle)
+   ========================================================================== */
+
+.screwed-menu-toggle {
+  display:          none;
+  align-items:      center;
+  justify-content:  center;
+  width:            2.5rem;
+  height:           2.5rem;
+  background:       rgba(255, 255, 255, 0.1);
+  border:           1px solid rgba(255, 255, 255, 0.2);
+  border-radius:    var(--screwed-radius-sm);
+  color:            var(--screwed-white);
+  cursor:           pointer;
+  transition:       background-color 0.2s ease, border-color 0.2s ease;
+  flex-shrink:      0;
+}
+
+.screwed-menu-toggle:hover {
+  background:   rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 255, 255, 0.35);
+}
+
+.screwed-header--scrolled .screwed-menu-toggle {
+  background:   rgba(27, 42, 92, 0.08);
+  border-color: var(--screwed-border);
+  color:        var(--screwed-navy);
+}
+
+.screwed-menu-toggle__icon {
+  display:        flex;
+  flex-direction: column;
+  gap:            5px;
+  width:          18px;
+}
+
+.screwed-menu-toggle__bar {
+  display:          block;
+  width:            100%;
+  height:           2px;
+  background:       currentColor;
+  border-radius:    1px;
+  transition:       transform 0.3s ease, opacity 0.3s ease, width 0.3s ease;
+  transform-origin: center center;
+}
+
+/* Hamburger → X animation */
+.screwed-menu-toggle[aria-expanded="true"] .screwed-menu-toggle__bar:nth-child(1) {
+  transform: translateY(7px) rotate(45deg);
+}
+
+.screwed-menu-toggle[aria-expanded="true"] .screwed-menu-toggle__bar:nth-child(2) {
+  opacity: 0;
+  transform: scaleX(0);
+}
+
+.screwed-menu-toggle[aria-expanded="true"] .screwed-menu-toggle__bar:nth-child(3) {
+  transform: translateY(-7px) rotate(-45deg);
+}
+
+/* ==========================================================================
+   9. Mobile Nav (#screwed-mobile-nav)
+   ========================================================================== */
+
+#screwed-mobile-nav {
+  position:         fixed;
+  top:              0;
+  right:            0;
+  bottom:           0;
+  width:            100%;
+  max-width:        360px;
+  z-index:          var(--screwed-z-mobile-nav);
+  background:       var(--screwed-white);
+  display:          flex;
+  flex-direction:   column;
+  padding:          5rem 2rem 2rem;
+  gap:              0;
+  transform:        translateX(100%);
+  transition:       transform 0.3s ease;
+  box-shadow:       -8px 0 32px rgba(0, 0, 0, 0.12);
+  overflow-y:       auto;
+}
+
+#screwed-mobile-nav.is-open {
+  transform: translateX(0);
+}
+
+.screwed-mobile-nav__list {
+  list-style:     none;
+  margin:         0;
+  padding:        0;
+  display:        flex;
+  flex-direction: column;
+  gap:            0;
+  border-top:     1px solid var(--screwed-border);
+}
+
+.screwed-mobile-nav__item {
+  border-bottom: 1px solid var(--screwed-border);
+}
+
+.screwed-mobile-nav__link {
+  display:         block;
+  padding:         1rem 0;
+  font-weight:     600;
+  font-size:       1rem;
+  color:           var(--screwed-navy);
+  text-decoration: none;
+  transition:      color 0.2s ease;
+}
+
+.screwed-mobile-nav__link:hover {
+  color: var(--screwed-orange);
+}
+
+.screwed-mobile-nav__footer {
+  margin-top:  auto;
+  padding-top: 2rem;
+  display:     flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+/* Mobile nav overlay backdrop */
+.screwed-mobile-nav__backdrop {
+  position:    fixed;
+  inset:       0;
+  background:  rgba(0, 0, 0, 0.5);
+  z-index:     calc(var(--screwed-z-mobile-nav) - 1);
+  opacity:     0;
+  visibility:  hidden;
+  transition:  opacity 0.3s ease, visibility 0.3s ease;
+}
+
+.screwed-mobile-nav__backdrop.is-visible {
+  opacity:    1;
+  visibility: visible;
+}
+
+/* ==========================================================================
+   10. Hero Section (.screwed-hero)
+   ========================================================================== */
+
+.screwed-hero {
+  min-height:      100vh;
+  position:        relative;
+  overflow:        hidden;
+  display:         flex;
+  align-items:     center;
+  justify-content: center;
+  background:      linear-gradient(
+                     135deg,
+                     var(--screwed-darker-bg) 0%,
+                     #0d1520 40%,
+                     var(--screwed-dark-bg) 100%
+                   );
+  padding-top:     6rem;
+  padding-bottom:  4rem;
+  padding-left:    2rem;
+  padding-right:   2rem;
+}
+
+/* ==========================================================================
+   11. Hero Orbs (.screwed-hero__orb)
+   ========================================================================== */
+
+.screwed-hero__orb {
+  position:      absolute;
+  border-radius: 50%;
+  filter:        blur(80px);
+  opacity:       0.4;
+  pointer-events: none;
+  will-change:   transform;
+}
+
+.screwed-hero__orb--1 {
+  top:        -10%;
+  left:       -8%;
+  width:      400px;
+  height:     400px;
+  background: var(--screwed-orange);
+}
+
+.screwed-hero__orb--2 {
+  bottom:     -12%;
+  right:      -8%;
+  width:      500px;
+  height:     500px;
+  background: var(--screwed-orange-dark-alt);
+  opacity:    0.3;
+}
+
+.screwed-hero__orb--3 {
+  top:        50%;
+  left:       50%;
+  transform:  translate(-50%, -50%);
+  width:      300px;
+  height:     300px;
+  background: var(--screwed-orange-dark);
+  opacity:    0.15;
+}
+
+/* ==========================================================================
+   12. Hero Content (.screwed-hero__content)
+   ========================================================================== */
+
+.screwed-hero__content {
+  text-align:  center;
+  max-width:   64rem;
+  margin:      0 auto;
+  position:    relative;
+  z-index:     1;
+  width:       100%;
+}
+
+/* ==========================================================================
+   13. Hero Badge (.screwed-hero__badge)
+   ========================================================================== */
+
+.screwed-hero__badge {
+  display:          inline-flex;
+  align-items:      center;
+  gap:              0.5rem;
+  padding:          0.5rem 1rem;
+  border:           1px solid rgba(232, 152, 63, 0.3);
+  background:       rgba(232, 152, 63, 0.1);
+  border-radius:    var(--screwed-radius-full);
+  color:            var(--screwed-orange-alt);
+  font-size:        0.875rem;
+  font-weight:      600;
+  letter-spacing:   0.02em;
+  margin-bottom:    1.5rem;
+  backdrop-filter:  blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.screwed-hero__badge-dot {
+  width:         6px;
+  height:        6px;
+  background:    var(--screwed-orange);
+  border-radius: 50%;
+  animation:     pulseDot 2s ease-in-out infinite;
+  flex-shrink:   0;
+}
+
+@keyframes pulseDot {
+  0%, 100% { opacity: 1;   transform: scale(1); }
+  50%       { opacity: 0.5; transform: scale(0.75); }
+}
+
+/* ==========================================================================
+   14. Hero Title (.screwed-hero__title)
+   ========================================================================== */
+
+.screwed-hero__title {
+  color:          var(--screwed-white);
+  font-weight:    900;
+  font-size:      3rem;
+  letter-spacing: -0.025em;
+  line-height:    0.95;
+  margin:         1.5rem 0;
+}
+
+/* ==========================================================================
+   15. Hero Underline Bar (.underline-bar)
+   ========================================================================== */
+
+.underline-bar {
+  display:          block;
+  height:           4px;
+  background:       var(--screwed-orange);
+  border-radius:    2px;
+  transform:        scaleX(0);
+  transform-origin: left center;
+  animation:        underlineGrow 1s ease 0.5s forwards;
+  margin-top:       0.25rem;
+}
+
+@keyframes underlineGrow {
+  from { transform: scaleX(0); }
+  to   { transform: scaleX(1); }
+}
+
+/* ==========================================================================
+   16. Hero Accent (.accent)
+   ========================================================================== */
+
+.accent {
+  color: var(--screwed-orange-alt);
+}
+
+/* ==========================================================================
+   17. Hero Description (.screwed-hero__desc)
+   ========================================================================== */
+
+.screwed-hero__desc {
+  color:         var(--screwed-light-text);
+  font-size:     1.25rem;
+  line-height:   1.75;
+  max-width:     42rem;
+  margin:        0 auto 2rem;
+}
+
+.screwed-hero__desc strong {
+  color:       var(--screwed-white);
+  font-weight: 600;
+}
+
+/* ==========================================================================
+   18. Hero Stats / Social Proof
+   ========================================================================== */
+
+.screwed-hero__stats {
+  display:         flex;
+  align-items:     center;
+  justify-content: center;
+  gap:             2rem;
+  flex-wrap:       wrap;
+  margin-bottom:   2rem;
+  padding:         1.5rem 2rem;
+  background:      rgba(255, 255, 255, 0.04);
+  border:          1px solid rgba(255, 255, 255, 0.08);
+  border-radius:   var(--screwed-radius-xl);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.screwed-hero__stat {
+  text-align: center;
+}
+
+.screwed-hero__stat-value {
+  display:        block;
+  font-size:      1.5rem;
+  font-weight:    900;
+  color:          var(--screwed-white);
+  letter-spacing: -0.02em;
+  line-height:    1;
+  margin-bottom:  0.25rem;
+}
+
+.screwed-hero__stat-label {
+  display:     block;
+  font-size:   0.75rem;
+  font-weight: 500;
+  color:       var(--screwed-light-text);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.screwed-hero__stat-divider {
+  width:      1px;
+  height:     2.5rem;
+  background: rgba(255, 255, 255, 0.12);
+  flex-shrink: 0;
+}
+
+/* ==========================================================================
+   19. Hero Buttons (.screwed-hero__buttons)
+   ========================================================================== */
+
+.screwed-hero__buttons {
+  display:         flex;
+  align-items:     center;
+  justify-content: center;
+  gap:             1rem;
+  flex-wrap:       wrap;
+  margin-bottom:   2rem;
+}
+
+/* ==========================================================================
+   20. Buttons (.screwed-btn)
+   ========================================================================== */
+
+.screwed-btn {
+  display:         inline-flex;
+  align-items:     center;
+  justify-content: center;
+  gap:             0.75rem;
+  padding:         0.875rem 1.5rem;
+  border-radius:   var(--screwed-radius-full);
+  font-family:     var(--screwed-font-sans);
+  font-weight:     600;
+  font-size:       0.875rem;
+  line-height:     1;
+  letter-spacing:  0.01em;
+  text-decoration: none;
+  cursor:          pointer;
+  border:          2px solid transparent;
+  transition:      all 0.2s ease;
+  white-space:     nowrap;
+  -webkit-user-select: none;
+  user-select:         none;
+}
+
+.screwed-btn:focus-visible {
+  outline:        2px solid var(--screwed-orange);
+  outline-offset: 3px;
+}
+
+/* Primary button */
+.screwed-btn--primary {
+  background:   var(--screwed-orange);
+  color:        var(--screwed-white);
+  border-color: var(--screwed-orange);
+}
+
+.screwed-btn--primary:hover {
+  background:  var(--screwed-orange-dark);
+  border-color: var(--screwed-orange-dark);
+  box-shadow:  var(--screwed-shadow-orange);
+  transform:   translateY(-2px);
+}
+
+.screwed-btn--primary:active {
+  transform: translateY(0);
+}
+
+/* Outline button */
+.screwed-btn--outline {
+  background:         rgba(255, 255, 255, 0.05);
+  color:              var(--screwed-white);
+  border-color:       rgba(255, 255, 255, 0.2);
+  backdrop-filter:    blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.screwed-btn--outline:hover {
+  background:   rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.35);
+  transform:    translateY(-2px);
+}
+
+.screwed-btn--outline:active {
+  transform: translateY(0);
+}
+
+/* Secondary (solid, for light backgrounds) */
+.screwed-btn--secondary {
+  background:   var(--screwed-navy);
+  color:        var(--screwed-white);
+  border-color: var(--screwed-navy);
+}
+
+.screwed-btn--secondary:hover {
+  background:  #243570;
+  border-color: #243570;
+  transform:   translateY(-2px);
+}
+
+/* Ghost (light bg contexts) */
+.screwed-btn--ghost {
+  background:   transparent;
+  color:        var(--screwed-navy);
+  border-color: var(--screwed-border);
+}
+
+.screwed-btn--ghost:hover {
+  background:   var(--screwed-surface);
+  border-color: #d1d5db;
+}
+
+/* Button sizes */
+.screwed-btn--sm {
+  padding:   0.5rem 1rem;
+  font-size: 0.8125rem;
+  gap:       0.5rem;
+}
+
+.screwed-btn--lg {
+  padding:   1rem 2rem;
+  font-size: 1rem;
+  gap:       0.875rem;
+}
+
+/* Button icon */
+.screwed-btn__icon {
+  display:     flex;
+  align-items: center;
+  font-size:   1.125em;
+  flex-shrink: 0;
+}
+
+/* ==========================================================================
+   21. Hero Trust (.screwed-hero__trust)
+   ========================================================================== */
+
+.screwed-hero__trust {
+  color:       var(--screwed-muted);
+  font-size:   0.875rem;
+  font-weight: 500;
+  display:     flex;
+  align-items: center;
+  justify-content: center;
+  gap:         0.5rem;
+  flex-wrap:   wrap;
+}
+
+.screwed-hero__trust-icon {
+  color:     var(--screwed-orange);
+  font-size: 1rem;
+}
+
+/* ==========================================================================
+   22. Sections — General
+   ========================================================================== */
+
+.screwed-section {
+  padding: var(--screwed-space-4xl) var(--screwed-space-xl);
+}
+
+.screwed-section--light {
+  background-color: var(--screwed-white);
+}
+
+.screwed-section--surface {
+  background-color: var(--screwed-surface);
+}
+
+.screwed-section--dark {
+  background-color: var(--screwed-dark-bg);
+}
+
+.screwed-section--darker {
+  background-color: var(--screwed-darker-bg);
+}
+
+.screwed-section__inner {
+  max-width: 72rem;
+  margin:    0 auto;
+  width:     100%;
+}
+
+.screwed-section__header {
+  text-align:    center;
+  margin-bottom: 3.5rem;
+}
+
+.screwed-section__eyebrow {
+  display:        block;
+  font-weight:    600;
+  font-size:      0.875rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color:          var(--screwed-orange-alt);
+  margin-bottom:  0.75rem;
+}
+
+.screwed-section__title {
+  font-weight:    900;
+  font-size:      2.25rem;
+  letter-spacing: -0.025em;
+  line-height:    1.1;
+  color:          var(--screwed-navy);
+  margin-bottom:  1rem;
+}
+
+.screwed-section__title--white {
+  color: var(--screwed-white);
+}
+
+.screwed-section__subtitle {
+  font-size:   1.125rem;
+  line-height: 1.625;
+  color:       var(--screwed-muted);
+  max-width:   48rem;
+  margin:      0 auto;
+}
+
+.screwed-section__subtitle--light {
+  color: var(--screwed-light-text);
+}
+
+/* ==========================================================================
+   23. How It Works (#how-it-works)
+   ========================================================================== */
+
+#how-it-works {
+  background-color: var(--screwed-white);
+}
+
+.screwed-steps {
+  display:               grid;
+  grid-template-columns: 1fr;
+  gap:                   2rem;
+}
+
+.screwed-step {
+  position:      relative;
+  padding:       2rem;
+  background:    var(--screwed-white);
+  border:        1px solid var(--screwed-border);
+  border-radius: var(--screwed-radius-xl);
+  overflow:      hidden;
+  transition:    box-shadow 0.25s ease, transform 0.25s ease;
+}
+
+.screwed-step:hover {
+  box-shadow: var(--screwed-shadow-lg);
+  transform:  translateY(-3px);
+}
+
+/* Subtle top accent line */
+.screwed-step::before {
+  content:       '';
+  position:      absolute;
+  top:           0;
+  left:          0;
+  right:         0;
+  height:        3px;
+  background:    linear-gradient(90deg, var(--screwed-orange) 0%, var(--screwed-orange-dark-alt) 100%);
+  border-radius: var(--screwed-radius-xl) var(--screwed-radius-xl) 0 0;
+  opacity:       0;
+  transition:    opacity 0.25s ease;
+}
+
+.screwed-step:hover::before {
+  opacity: 1;
+}
+
+.screwed-step__number {
+  display:        inline-flex;
+  align-items:    center;
+  justify-content: center;
+  width:          3.5rem;
+  height:         3.5rem;
+  background:     rgba(232, 152, 63, 0.1);
+  border:         2px solid rgba(232, 152, 63, 0.2);
+  border-radius:  var(--screwed-radius-lg);
+  font-weight:    900;
+  font-size:      1.5rem;
+  color:          var(--screwed-orange);
+  letter-spacing: -0.02em;
+  margin-bottom:  1.25rem;
+  flex-shrink:    0;
+}
+
+.screwed-step__title {
+  color:         var(--screwed-navy);
+  font-weight:   700;
+  font-size:     1.25rem;
+  margin-bottom: 0.75rem;
+  letter-spacing: -0.01em;
+}
+
+.screwed-step__desc {
+  color:       var(--screwed-muted);
+  font-size:   0.9375rem;
+  line-height: 1.6;
+}
+
+/* Connecting arrows between steps (desktop only) */
+.screwed-steps__connector {
+  display:         none;
+  align-items:     center;
+  justify-content: center;
+  color:           var(--screwed-orange);
+  font-size:       1.5rem;
+  opacity:         0.5;
+}
+
+/* ==========================================================================
+   24. Features Section (#features)
+   ========================================================================== */
+
+#features {
+  background-color: var(--screwed-surface);
+}
+
+.screwed-features__grid {
+  display:               grid;
+  grid-template-columns: 1fr;
+  gap:                   1.5rem;
+}
+
+.screwed-feature-card {
+  background:    var(--screwed-white);
+  border:        1px solid var(--screwed-border);
+  border-radius: var(--screwed-radius-xl);
+  padding:       1.75rem;
+  display:       flex;
+  flex-direction: column;
+  transition:    box-shadow 0.25s ease, transform 0.25s ease, border-color 0.25s ease;
+  position:      relative;
+  overflow:      hidden;
+}
+
+.screwed-feature-card:hover {
+  box-shadow:   var(--screwed-shadow-lg);
+  transform:    translateY(-4px);
+  border-color: rgba(232, 152, 63, 0.25);
+}
+
+.screwed-feature-card--featured {
+  border-color: rgba(232, 152, 63, 0.35);
+  background:   linear-gradient(135deg, var(--screwed-white) 0%, #fff9f2 100%);
+}
+
+.screwed-feature__icon {
+  font-size:     2rem;
+  margin-bottom: 1rem;
+  display:       block;
+  line-height:   1;
+}
+
+.screwed-feature__title {
+  color:         var(--screwed-navy);
+  font-weight:   700;
+  font-size:     1.125rem;
+  margin-bottom: 0.5rem;
+  letter-spacing: -0.01em;
+}
+
+.screwed-feature__desc {
+  color:       var(--screwed-muted);
+  font-size:   0.875rem;
+  line-height: 1.6;
+  flex-grow:   1;
+}
+
+.screwed-feature__tag {
+  display:       inline-flex;
+  align-items:   center;
+  margin-top:    1rem;
+  padding:       0.25rem 0.625rem;
+  background:    rgba(232, 152, 63, 0.1);
+  color:         var(--screwed-orange);
+  font-size:     0.75rem;
+  font-weight:   600;
+  border-radius: var(--screwed-radius-full);
+  letter-spacing: 0.02em;
+  align-self:    flex-start;
+}
+
+/* ==========================================================================
+   25. Roadmap Section (#roadmap)
+   ========================================================================== */
+
+#roadmap {
+  background-color: var(--screwed-dark-bg);
+}
+
+#roadmap .screwed-section__title {
+  color: var(--screwed-white);
+}
+
+#roadmap .screwed-section__subtitle {
+  color: var(--screwed-light-text);
+}
+
+.screwed-roadmap__list {
+  display:    flex;
+  flex-direction: column;
+  gap:        1rem;
+  max-width:  48rem;
+  margin:     0 auto;
+  list-style: none;
+  padding:    0;
+}
+
+.screwed-roadmap-item {
+  display:       flex;
+  align-items:   flex-start;
+  gap:           1rem;
+  padding:       1.5rem;
+  background:    rgba(255, 255, 255, 0.05);
+  border:        1px solid rgba(255, 255, 255, 0.08);
+  border-radius: var(--screwed-radius-xl);
+  transition:    background-color 0.2s ease, border-color 0.2s ease;
+}
+
+.screwed-roadmap-item:hover {
+  background:   rgba(255, 255, 255, 0.08);
+  border-color: rgba(232, 152, 63, 0.25);
+}
+
+.screwed-roadmap-item__icon {
+  font-size:    1.5rem;
+  flex-shrink:  0;
+  margin-top:   0.125rem;
+  line-height:  1;
+}
+
+.screwed-roadmap-item__body {
+  flex: 1;
+  min-width: 0;
+}
+
+.screwed-roadmap-item__header {
+  display:     flex;
+  align-items: center;
+  gap:         0.75rem;
+  flex-wrap:   wrap;
+  margin-bottom: 0.375rem;
+}
+
+.screwed-roadmap-item__title {
+  color:       var(--screwed-white);
+  font-weight: 700;
+  font-size:   1rem;
+  margin:      0;
+}
+
+.screwed-roadmap-item__badge {
+  display:        inline-flex;
+  align-items:    center;
+  padding:        0.2rem 0.625rem;
+  background:     rgba(232, 152, 63, 0.15);
+  color:          var(--screwed-orange-alt);
+  font-size:      0.6875rem;
+  font-weight:    700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  border-radius:  var(--screwed-radius-full);
+  border:         1px solid rgba(232, 152, 63, 0.25);
+  white-space:    nowrap;
+}
+
+.screwed-roadmap-item__badge--soon {
+  background: rgba(232, 152, 63, 0.15);
+  color:      var(--screwed-orange-alt);
+  border-color: rgba(232, 152, 63, 0.25);
+}
+
+.screwed-roadmap-item__badge--wip {
+  background: rgba(59, 130, 246, 0.15);
+  color:      #60a5fa;
+  border-color: rgba(59, 130, 246, 0.25);
+}
+
+.screwed-roadmap-item__badge--done {
+  background: rgba(16, 185, 129, 0.15);
+  color:      #34d399;
+  border-color: rgba(16, 185, 129, 0.25);
+}
+
+.screwed-roadmap-item__desc {
+  color:       var(--screwed-light-text);
+  font-size:   0.9375rem;
+  line-height: 1.55;
+  margin:      0;
+}
+
+/* ==========================================================================
+   26. Download CTA (#download)
+   ========================================================================== */
+
+#download {
+  background:  linear-gradient(135deg, var(--screwed-orange) 0%, var(--screwed-orange-dark-alt) 100%);
+  text-align:  center;
+  padding:     5rem 2rem;
+  position:    relative;
+  overflow:    hidden;
+}
+
+#download::before {
+  content:       '';
+  position:      absolute;
+  inset:         0;
+  background:    url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.04'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E") repeat;
+  pointer-events: none;
+}
+
+.screwed-download__inner {
+  position:  relative;
+  z-index:   1;
+  max-width: 48rem;
+  margin:    0 auto;
+}
+
+#download h2,
+.screwed-download__title {
+  color:          var(--screwed-white);
+  font-weight:    900;
+  font-size:      2.25rem;
+  letter-spacing: -0.025em;
+  line-height:    1.1;
+  margin-bottom:  1rem;
+}
+
+#download p,
+.screwed-download__desc {
+  color:         rgba(255, 255, 255, 0.9);
+  font-size:     1.125rem;
+  line-height:   1.625;
+  margin-bottom: 2.5rem;
+}
+
+.screwed-download__buttons {
+  display:         flex;
+  align-items:     center;
+  justify-content: center;
+  gap:             1rem;
+  flex-wrap:       wrap;
+  margin-bottom:   1.5rem;
+}
+
+.screwed-download__trust {
+  color:       rgba(255, 255, 255, 0.75);
+  font-size:   0.8125rem;
+  font-weight: 500;
+}
+
+/* Download section — inverted button styles */
+.screwed-btn--download-primary {
+  background:   var(--screwed-white);
+  color:        var(--screwed-orange-dark);
+  border-color: var(--screwed-white);
+  font-weight:  700;
+}
+
+.screwed-btn--download-primary:hover {
+  background:  #f0f0f0;
+  border-color: #f0f0f0;
+  transform:   translateY(-2px);
+  box-shadow:  0 8px 24px rgba(0, 0, 0, 0.15);
+}
+
+.screwed-btn--download-outline {
+  background:   rgba(255, 255, 255, 0.1);
+  color:        var(--screwed-white);
+  border-color: rgba(255, 255, 255, 0.4);
+}
+
+.screwed-btn--download-outline:hover {
+  background:   rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.6);
+  transform:    translateY(-2px);
+}
+
+/* ==========================================================================
+   27. Footer (.screwed-footer)
+   ========================================================================== */
+
+.screwed-footer {
+  background-color: var(--screwed-darker-bg);
+  color:            var(--screwed-white);
+  padding:          4rem 2rem 2rem;
+}
+
+.screwed-footer__inner {
+  max-width: 72rem;
+  margin:    0 auto;
+}
+
+.screwed-footer__top {
+  display:         flex;
+  align-items:     flex-start;
+  justify-content: space-between;
+  gap:             3rem;
+  flex-wrap:       wrap;
+  padding-bottom:  3rem;
+  border-bottom:   1px solid rgba(255, 255, 255, 0.08);
+  margin-bottom:   2rem;
+}
+
+.screwed-footer__brand {
+  flex:     1;
+  min-width: 240px;
+  max-width: 320px;
+}
+
+.screwed-footer__logo {
+  display:         flex;
+  align-items:     center;
+  gap:             0.625rem;
+  font-weight:     900;
+  font-size:       1.125rem;
+  color:           var(--screwed-white);
+  text-decoration: none;
+  letter-spacing:  -0.015em;
+  margin-bottom:   0.875rem;
+}
+
+.screwed-footer__tagline {
+  color:       var(--screwed-light-text);
+  font-size:   0.9375rem;
+  line-height: 1.6;
+  margin-bottom: 1.5rem;
+}
+
+.screwed-footer__buttons {
+  display:    flex;
+  flex-wrap:  wrap;
+  gap:        0.75rem;
+}
+
+.screwed-footer__nav-group {
+  display:        flex;
+  flex-direction: column;
+  gap:            0.75rem;
+  min-width:      140px;
+}
+
+.screwed-footer__nav-heading {
+  font-weight:    700;
+  font-size:      0.8125rem;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color:          rgba(255, 255, 255, 0.5);
+  margin-bottom:  0.25rem;
+}
+
+.screwed-footer__nav-link {
+  color:           var(--screwed-light-text);
+  font-size:       0.9375rem;
+  text-decoration: none;
+  transition:      color 0.2s ease;
+}
+
+.screwed-footer__nav-link:hover {
+  color: var(--screwed-orange-alt);
+}
+
+.screwed-footer__bottom {
+  display:         flex;
+  align-items:     center;
+  justify-content: space-between;
+  gap:             1rem;
+  flex-wrap:       wrap;
+}
+
+.screwed-footer__copyright {
+  color:     var(--screwed-muted);
+  font-size: 0.875rem;
+}
+
+.screwed-footer__trust-badge {
+  display:      inline-flex;
+  align-items:  center;
+  gap:          0.375rem;
+  padding:      0.3rem 0.75rem;
+  background:   rgba(255, 255, 255, 0.05);
+  border:       1px solid rgba(255, 255, 255, 0.1);
+  border-radius: var(--screwed-radius-full);
+  color:        var(--screwed-light-text);
+  font-size:    0.75rem;
+  font-weight:  500;
+}
+
+.screwed-footer__trust-badge-dot {
+  width:         6px;
+  height:        6px;
+  background:    #10b981;
+  border-radius: 50%;
+  flex-shrink:   0;
+}
+
+.screwed-footer__legal-links {
+  display:    flex;
+  gap:        1.5rem;
+  flex-wrap:  wrap;
+}
+
+.screwed-footer__legal-link {
+  color:           var(--screwed-muted);
+  font-size:       0.875rem;
+  text-decoration: none;
+  transition:      color 0.2s ease;
+}
+
+.screwed-footer__legal-link:hover {
+  color: var(--screwed-light-text);
+}
+
+/* ==========================================================================
+   28. Scroll Animations (.screwed-animate)
+   ========================================================================== */
+
+.screwed-animate {
+  opacity:    0;
+  transform:  translateY(30px);
+  transition: opacity 0.6s ease, transform 0.6s ease;
+}
+
+.screwed-animate--visible {
+  opacity:   1;
+  transform: translateY(0);
+}
+
+/* Staggered delays via data-delay attribute */
+.screwed-animate[data-delay="1"] {
+  transition-delay: 0.15s;
+}
+
+.screwed-animate[data-delay="2"] {
+  transition-delay: 0.3s;
+}
+
+.screwed-animate[data-delay="3"] {
+  transition-delay: 0.45s;
+}
+
+.screwed-animate[data-delay="4"] {
+  transition-delay: 0.6s;
+}
+
+/* Slide-in from left / right variants */
+.screwed-animate--left {
+  opacity:   0;
+  transform: translateX(-30px);
+  transition: opacity 0.6s ease, transform 0.6s ease;
+}
+
+.screwed-animate--right {
+  opacity:   0;
+  transform: translateX(30px);
+  transition: opacity 0.6s ease, transform 0.6s ease;
+}
+
+.screwed-animate--left.screwed-animate--visible,
+.screwed-animate--right.screwed-animate--visible {
+  opacity:   1;
+  transform: translateX(0);
+}
+
+/* Scale variant */
+.screwed-animate--scale {
+  opacity:   0;
+  transform: scale(0.92);
+  transition: opacity 0.6s ease, transform 0.6s ease;
+}
+
+.screwed-animate--scale.screwed-animate--visible {
+  opacity:   1;
+  transform: scale(1);
+}
+
+/* ==========================================================================
+   29. Responsive — Small (sm: 640px)
+   ========================================================================== */
+
+@media (min-width: 640px) {
+  .screwed-hero__title {
+    font-size:   3.75rem;
+    line-height: 1;
+  }
+
+  .screwed-section__title {
+    font-size: 2.75rem;
+  }
+}
+
+/* ==========================================================================
+   30. Responsive — Medium (md: 768px)
+   ========================================================================== */
+
+@media (min-width: 768px) {
+  .screwed-header {
+    padding: 1rem 3rem;
+  }
+
+  .screwed-menu-toggle {
+    display: none !important;
+  }
+
+  #screwed-mobile-nav {
+    display: none !important;
+  }
+
+  .screwed-mobile-nav__backdrop {
+    display: none !important;
+  }
+
+  .screwed-hero {
+    padding-top:    8rem;
+    padding-bottom: 5rem;
+  }
+
+  .screwed-hero__title {
+    font-size: 4.5rem;
+  }
+
+  .screwed-section {
+    padding: var(--screwed-space-5xl) var(--screwed-space-xl);
+  }
+
+  .screwed-section__title {
+    font-size: 3rem;
+  }
+
+  .screwed-steps {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .screwed-features__grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  #download h2,
+  .screwed-download__title {
+    font-size: 3rem;
+  }
+
+  .screwed-footer__top {
+    flex-wrap: nowrap;
+  }
+}
+
+/* ==========================================================================
+   31. Responsive — Large (lg: 1024px)
+   ========================================================================== */
+
+@media (min-width: 1024px) {
+  .screwed-header {
+    padding: 1.25rem 4rem;
+  }
+
+  .screwed-hero__title {
+    font-size: 6rem;
+  }
+
+  .screwed-features__grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* ==========================================================================
+   32. Responsive — Extra Large (xl: 1280px)
+   ========================================================================== */
+
+@media (min-width: 1280px) {
+  .screwed-section {
+    padding-left:  4rem;
+    padding-right: 4rem;
+  }
+}
+
+/* ==========================================================================
+   33. Mobile-only rules (below sm: 640px)
+   ========================================================================== */
+
+@media (max-width: 639px) {
+  .screwed-menu-toggle {
+    display: flex;
+  }
+
+  .screwed-nav {
+    display: none;
+  }
+
+  .screwed-hero__stats {
+    gap:     1.25rem;
+    padding: 1.25rem 1rem;
+  }
+
+  .screwed-hero__stat-divider {
+    display: none;
+  }
+
+  .screwed-btn {
+    padding: 0.75rem 1.25rem;
+  }
+
+  .screwed-hero__buttons {
+    flex-direction: column;
+    align-items:    stretch;
+  }
+
+  .screwed-hero__buttons .screwed-btn {
+    justify-content: center;
+    width: 100%;
+  }
+}
+
+/* ==========================================================================
+   34. Utility Classes
+   ========================================================================== */
+
+.screwed-visually-hidden {
+  position:   absolute;
+  width:      1px;
+  height:     1px;
+  padding:    0;
+  margin:     -1px;
+  overflow:   hidden;
+  clip:       rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border:     0;
+}
+
+.screwed-text-orange  { color: var(--screwed-orange-alt); }
+.screwed-text-navy    { color: var(--screwed-navy); }
+.screwed-text-muted   { color: var(--screwed-muted); }
+.screwed-text-white   { color: var(--screwed-white); }
+
+.screwed-bg-surface   { background-color: var(--screwed-surface); }
+.screwed-bg-dark      { background-color: var(--screwed-dark-bg); }
+.screwed-bg-darker    { background-color: var(--screwed-darker-bg); }
+
+/* Divider */
+.screwed-divider {
+  border:           none;
+  border-top:       1px solid var(--screwed-border);
+  margin:           0;
+}
+
+.screwed-divider--dark {
+  border-top-color: rgba(255, 255, 255, 0.08);
+}
+
+/* Focus ring */
+:focus-visible {
+  outline:        2px solid var(--screwed-orange);
+  outline-offset: 3px;
+}
+
+/* ==========================================================================
+   35. Misc — Scroll padding for fixed header
+   ========================================================================== */
+
+html {
+  scroll-padding-top: 80px;
+}
+
+/* ==========================================================================
+   36. @media prefers-reduced-motion
+   ========================================================================== */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration:        0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration:       0.01ms !important;
+    scroll-behavior:           auto !important;
+  }
+
+  html {
+    scroll-behavior: auto;
+  }
+
+  .screwed-animate {
+    opacity:   1;
+    transform: none;
+    transition: none;
+  }
+
+  .screwed-animate--visible {
+    opacity:   1;
+    transform: none;
+  }
+
+  .underline-bar {
+    animation: none;
+    transform: scaleX(1);
+  }
+
+  .screwed-hero__badge-dot {
+    animation: none;
+  }
+
+  .screwed-step:hover,
+  .screwed-feature-card:hover,
+  .screwed-btn:hover,
+  .screwed-btn--primary:hover,
+  .screwed-btn--outline:hover,
+  .screwed-nav__cta:hover {
+    transform: none;
+  }
+}
