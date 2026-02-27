@@ -432,40 +432,6 @@ function is_post(): bool
     return ($_SERVER['REQUEST_METHOD'] ?? '') === 'POST';
 }
 
-// ─── Authentication state ──────────────────────────────────────────────────────
-
-/**
- * Return the currently authenticated user row, or null if not logged in.
- *
- * Fetches from the database on every call (no in-request cache here — the
- * auth.php layer provides caching if needed).
- *
- * @return array<string, mixed>|null
- */
-function current_user(): ?array
-{
-    if (session_status() !== PHP_SESSION_ACTIVE || empty($_SESSION['user_id'])) {
-        return null;
-    }
-
-    $user_id = (int) $_SESSION['user_id'];
-
-    try {
-        // db() is defined in includes/db.php which must be loaded before helpers.php
-        $stmt = db()->prepare(
-            'SELECT id, email, name, created_at, updated_at
-               FROM users
-              WHERE id = :id
-              LIMIT 1'
-        );
-        $stmt->execute([':id' => $user_id]);
-        $user = $stmt->fetch();
-    } catch (Throwable) {
-        return null;
-    }
-
-    return $user ?: null;
-}
 
 /**
  * Return whether a user is currently logged in.
