@@ -1,0 +1,33 @@
+B442WP — Base44 to WordPress Converter
+Change History
+======================================
+
+Version 1.1.0 — 2026-02-27
+  - Full PHP web application (b442wp-app/) added:
+    - Pay-per-conversion service ($9 basic / $19 WooCommerce)
+    - User authentication (register, login, password reset)
+    - Base44 zip upload + free analysis/preview
+    - Stripe and PayPal one-time payment integration
+    - Claude API (Sonnet) conversion engine
+    - WordPress theme assembler + zip packaging
+    - 30-day download expiry with cleanup cron
+    - Dashboard with conversion history
+    - Account management
+
+  Files added:
+    b442wp-app/ — complete PHP application
+    b442wp-app/converter/ — Parser, Analyzer, ClaudeClient, Converter, Assembler
+    b442wp-app/converter/prompts/ — AI prompt templates with 11 converter rules
+    b442wp-app/wp-skeleton/ — WordPress template stubs
+    b442wp-app/includes/ — db, auth, helpers, middleware, stripe, paypal
+    b442wp-app/pages/ — all page handlers
+    b442wp-app/templates/ — HTML shell layout
+    b442wp-app/assets/ — CSS + JS
+
+Version 1.0.0 — 2026-02-26
+  - Initial release: Screwed TOS Scan WordPress theme (reference conversion)
+    - screwed-theme/ — complete WordPress theme
+    - screwed-theme.zip — upload-ready theme package
+    - scanner/ — auto style extractor (no DevTools required)
+      - scan-styles.js — fetches live URL, parses CSS + Tailwind classes
+      - generate-css-vars.js — outputs CSS custom properties from scan JSON

@@ -1,0 +1,9 @@
+config.php
+storage/
+*.sqlite
+*.log
+.DS_Store
+Thumbs.db
+vendor/
+node_modules/
+*.env

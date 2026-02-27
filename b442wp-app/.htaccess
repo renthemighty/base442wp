@@ -1,0 +1,32 @@
+Options -Indexes
+
+# Deny access to sensitive directories
+<FilesMatch "\.(sqlite|sql|json|log|lock|sh|env)$">
+    Order Allow,Deny
+    Deny from all
+</FilesMatch>
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteBase /
+
+    # Block access to storage directory
+    RewriteRule ^storage/ - [F,L]
+    RewriteRule ^config\.php$ - [F,L]
+    RewriteRule ^\.env$ - [F,L]
+
+    # Serve existing files/dirs directly
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+
+    # Route everything through index.php
+    RewriteRule ^(.*)$ index.php?_url=$1 [QSA,L]
+</IfModule>
+
+# PHP settings
+<IfModule mod_php.c>
+    php_value upload_max_filesize 50M
+    php_value post_max_size 55M
+    php_value max_execution_time 300
+    php_value memory_limit 256M
+</IfModule>
