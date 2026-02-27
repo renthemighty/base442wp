@@ -38,7 +38,7 @@ require_once __DIR__ . '/../includes/paypal.php';
 require_auth();
 
 // Load and ownership-check the conversion
-$conversion = verify_conversion_owner(ROUTE_UUID);
+$conversion = verify_conversion_owner($_REQUEST['uuid'] ?? '');
 $status     = $conversion['status'] ?? '';
 
 // ─── Convenience: already done? ────────────────────────────────────────────────

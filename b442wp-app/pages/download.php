@@ -28,7 +28,7 @@ require_once dirname(__DIR__) . '/includes/middleware.php';
 // Must be authenticated
 require_auth();
 
-$uuid = defined('ROUTE_UUID') ? ROUTE_UUID : ($_REQUEST['uuid'] ?? '');
+$uuid = $_REQUEST['uuid'] ?? '';
 
 if (empty($uuid)) {
     flash('error', 'Invalid download link.', 'error');

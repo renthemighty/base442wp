@@ -23,7 +23,7 @@ require_once __DIR__ . '/../includes/middleware.php';
 require_once __DIR__ . '/../includes/db.php';
 
 // Must be authenticated; loads and ownership-checks the conversion
-$conversion = verify_conversion_owner(ROUTE_UUID);
+$conversion = verify_conversion_owner($_REQUEST['uuid'] ?? '');
 $status      = $conversion['status'] ?? 'pending';
 
 // ─── Status routing ────────────────────────────────────────────────────────────
