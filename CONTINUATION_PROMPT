@@ -1,10 +1,14 @@
-# B442WP — Continuation Prompt
-# For future Claude Code sessions working on this repository
-# Last updated: v1.1.0
+B442WP — Base44 to WordPress Converter
+Project Continuation Prompt
+=========================================
+Last updated: 2026-02-27
+Current version: 1.1.0
+Repo: renthemighty/base442wp (private)
+Branch: claude/base44-wordpress-converter-x4KEi
+Remote proxy: 127.0.0.1:56565
 
-==============================================================================
-## WHAT THIS PROJECT IS
-==============================================================================
+This document is the complete project context for a new Claude Code session. Read
+it in full before making any changes. Nothing else is needed to get started.
 
 B442WP is a pay-per-conversion SaaS that converts Base44 React apps into
 production-ready WordPress themes. Users upload a Base44 ZIP export, get a
@@ -12,7 +16,7 @@ free preview/analysis, pay once ($9 basic, $19 WooCommerce), and download
 a ready-to-upload WordPress theme ZIP.
 
 Live app: https://app.base44towordpress.com
-Marketing: https://base44towordpress.com
+Marketing: https://base44towordpress.com (separate WordPress site, not in this repo)
 
 Stack: PHP 8.0+, SQLite (PDO/WAL), zero framework, raw cURL for HTTP.
 Payments: Stripe Checkout (mode:"payment") + PayPal Orders v2.
