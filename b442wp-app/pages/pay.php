@@ -55,7 +55,7 @@ if (!in_array($status, ['parsed', 'unpaid'], true)) {
     ];
 
     $target = $redirect_map[$status] ?? '/';
-    flash('info', 'This conversion is currently in status: ' . status_label($status) . '.', 'info');
+    flash('info', 'This conversion is currently in status: ' . conversion_status_label($status) . '.', 'info');
     redirect($target);
 }
 
