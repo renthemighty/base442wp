@@ -115,7 +115,7 @@ ob_start();
 
         <!-- Back to dashboard -->
         <div class="page-back">
-            <a href="<?= base_url('/') ?>" class="link link--muted">
+            <a href="<?= base_url('/') ?>" class="link--muted">
                 <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
                     <path d="M10 3L5 8l5 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
                 </svg>
@@ -165,156 +165,159 @@ ob_start();
 
         <div class="preview-layout">
 
-            <!-- Left: Analysis Details -->
-            <div class="preview-analysis">
-
-                <!-- Theme Heading -->
-                <div class="preview-theme-header">
-                    <h1 class="preview-theme-name">
-                        <?= htmlspecialchars($theme_name, ENT_QUOTES, 'UTF-8') ?>
-                    </h1>
-                    <p class="preview-theme-sub">
-                        WordPress theme slug &mdash; ready for conversion
-                    </p>
-                </div>
-
-                <!-- WooCommerce Badge -->
+            <!-- Theme Heading -->
+            <div class="preview-theme-header">
+                <h1 class="preview-theme-name">
+                    <?= htmlspecialchars($theme_name, ENT_QUOTES, 'UTF-8') ?>
+                </h1>
+                <p class="preview-theme-sub">
+                    WordPress theme slug &mdash; ready for conversion
+                </p>
                 <?php if ($has_woocommerce): ?>
-                <div class="preview-badge preview-badge--woo">
-                    <svg width="16" height="16" viewBox="0 0 20 20" fill="none" aria-hidden="true">
-                        <circle cx="10" cy="10" r="9" stroke="currentColor" stroke-width="1.5"/>
-                        <path d="M6 10l3 3 5-6" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/>
+                <span class="preview-badge preview-badge--woo">
+                    <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                        <circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.25"/>
+                        <path d="M5 8l2 2 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
                     </svg>
                     WooCommerce detected
-                </div>
+                </span>
+                <?php else: ?>
+                <span class="preview-badge preview-badge--basic">
+                    <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                        <path d="M2 3h12a1 1 0 011 1v8a1 1 0 01-1 1H2a1 1 0 01-1-1V4a1 1 0 011-1z" stroke="currentColor" stroke-width="1.25"/>
+                        <path d="M1 6h14" stroke="currentColor" stroke-width="1.25"/>
+                    </svg>
+                    Basic site
+                </span>
                 <?php endif; ?>
+            </div>
 
-                <!-- Detected Pages -->
-                <?php if (!empty($detected_pages)): ?>
-                <div class="preview-section">
-                    <h2 class="preview-section__title">
-                        Detected Pages
-                        <span class="preview-section__count"><?= count($detected_pages) ?></span>
-                    </h2>
-                    <ul class="preview-pages" role="list">
-                        <?php foreach ($detected_pages as $page):
-                            $page_name = is_array($page) ? ($page['name'] ?? (string) $page) : (string) $page;
-                        ?>
-                        <li class="preview-pages__item">
-                            <span class="preview-pages__icon" aria-hidden="true">
-                                <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                                    <?= _preview_page_icon($page_name) ?>
-                                </svg>
-                            </span>
-                            <span class="preview-pages__name">
-                                <?= htmlspecialchars($page_name, ENT_QUOTES, 'UTF-8') ?>
-                            </span>
+            <!-- Detected Pages Card -->
+            <?php if (!empty($detected_pages)): ?>
+            <div class="card">
+                <h2 class="preview-section__title">
+                    Detected Pages
+                    <span class="preview-section__count"><?= count($detected_pages) ?></span>
+                </h2>
+                <ul class="preview-pages" role="list">
+                    <?php foreach ($detected_pages as $page):
+                        $page_name = is_array($page) ? ($page['name'] ?? (string) $page) : (string) $page;
+                    ?>
+                    <li class="preview-pages__item">
+                        <span class="preview-pages__icon" aria-hidden="true">
+                            <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
+                                <?= _preview_page_icon($page_name) ?>
+                            </svg>
+                        </span>
+                        <span class="preview-pages__name">
+                            <?= htmlspecialchars($page_name, ENT_QUOTES, 'UTF-8') ?>
+                        </span>
+                    </li>
+                    <?php endforeach; ?>
+                </ul>
+            </div>
+            <?php endif; ?>
+
+            <!-- Design Tokens Card -->
+            <?php if (!empty($fonts) || !empty($colors)): ?>
+            <div class="card">
+                <h2 class="preview-section__title">Design Tokens</h2>
+
+                <?php if (!empty($fonts)): ?>
+                <div class="preview-tokens preview-tokens--fonts">
+                    <h3 class="preview-tokens__label">Fonts</h3>
+                    <ul class="preview-tokens__list" role="list">
+                        <?php foreach (array_slice($fonts, 0, 6) as $font): ?>
+                        <li class="preview-tokens__font">
+                            <?= htmlspecialchars((string) $font, ENT_QUOTES, 'UTF-8') ?>
                         </li>
                         <?php endforeach; ?>
                     </ul>
                 </div>
                 <?php endif; ?>
 
-                <!-- Design Tokens -->
-                <?php if (!empty($fonts) || !empty($colors)): ?>
-                <div class="preview-section">
-                    <h2 class="preview-section__title">Design Tokens</h2>
-
-                    <?php if (!empty($fonts)): ?>
-                    <div class="preview-tokens preview-tokens--fonts">
-                        <h3 class="preview-tokens__label">Fonts</h3>
-                        <ul class="preview-tokens__list" role="list">
-                            <?php foreach (array_slice($fonts, 0, 6) as $font): ?>
-                            <li class="preview-tokens__font">
-                                <?= htmlspecialchars((string) $font, ENT_QUOTES, 'UTF-8') ?>
-                            </li>
-                            <?php endforeach; ?>
-                        </ul>
-                    </div>
-                    <?php endif; ?>
-
-                    <?php if (!empty($colors)): ?>
-                    <div class="preview-tokens preview-tokens--colors">
-                        <h3 class="preview-tokens__label">Colors</h3>
-                        <ul class="preview-tokens__swatches" role="list">
-                            <?php foreach (array_slice($colors, 0, 12) as $color):
-                                // Sanitize color value — allow only safe CSS color strings
-                                $safe_color = preg_match('/^#[0-9a-f]{3,8}$|^rgb\([\d,\s]+\)$|^rgba\([\d,.\s]+\)$|^hsl\([\d,%\s]+\)$/i', (string) $color)
-                                    ? (string) $color
-                                    : 'transparent';
-                            ?>
-                            <li class="preview-tokens__swatch-item">
-                                <span
-                                    class="preview-tokens__swatch"
-                                    style="background: <?= htmlspecialchars($safe_color, ENT_QUOTES, 'UTF-8') ?>"
-                                    title="<?= htmlspecialchars($safe_color, ENT_QUOTES, 'UTF-8') ?>"
-                                    aria-label="Color: <?= htmlspecialchars($safe_color, ENT_QUOTES, 'UTF-8') ?>"
-                                    role="img"
-                                ></span>
-                            </li>
-                            <?php endforeach; ?>
-                        </ul>
-                    </div>
-                    <?php endif; ?>
+                <?php if (!empty($colors)): ?>
+                <div class="preview-tokens preview-tokens--colors">
+                    <h3 class="preview-tokens__label">Colors</h3>
+                    <ul class="preview-tokens__swatches" role="list">
+                        <?php foreach (array_slice($colors, 0, 12) as $color):
+                            $safe_color = preg_match('/^#[0-9a-f]{3,8}$|^rgb\([\d,\s]+\)$|^rgba\([\d,.\s]+\)$|^hsl\([\d,%\s]+\)$/i', (string) $color)
+                                ? (string) $color
+                                : 'transparent';
+                        ?>
+                        <li class="preview-tokens__swatch-item">
+                            <span
+                                class="preview-tokens__swatch"
+                                style="background: <?= htmlspecialchars($safe_color, ENT_QUOTES, 'UTF-8') ?>"
+                                title="<?= htmlspecialchars($safe_color, ENT_QUOTES, 'UTF-8') ?>"
+                                aria-label="Color: <?= htmlspecialchars($safe_color, ENT_QUOTES, 'UTF-8') ?>"
+                                role="img"
+                            ></span>
+                        </li>
+                        <?php endforeach; ?>
+                    </ul>
                 </div>
+                <?php else: ?>
+                <p class="preview-tokens__label" style="margin-bottom:0">Default palette</p>
                 <?php endif; ?>
+            </div>
+            <?php endif; ?>
 
-                <!-- Stats row -->
-                <div class="preview-stats">
-                    <div class="preview-stat">
-                        <span class="preview-stat__value"><?= count($detected_pages) ?: '—' ?></span>
-                        <span class="preview-stat__label">Pages</span>
-                    </div>
-                    <div class="preview-stat">
-                        <span class="preview-stat__value"><?= (int) ($source_meta['component_count'] ?? 0) ?></span>
-                        <span class="preview-stat__label">Components</span>
-                    </div>
-                    <div class="preview-stat">
-                        <span class="preview-stat__value">~<?= $estimated_files ?></span>
-                        <span class="preview-stat__label">Output Files</span>
-                    </div>
-                    <?php if (!empty($source_meta['has_typescript'])): ?>
-                    <div class="preview-stat">
-                        <span class="preview-stat__value">TS</span>
-                        <span class="preview-stat__label">TypeScript</span>
-                    </div>
-                    <?php endif; ?>
-                    <?php if (!empty($source_meta['has_tailwind'])): ?>
-                    <div class="preview-stat">
-                        <span class="preview-stat__value">TW</span>
-                        <span class="preview-stat__label">Tailwind</span>
-                    </div>
-                    <?php endif; ?>
-                </div>
-
+            <!-- Technical stats row -->
+            <div class="preview-stats">
+                <span class="preview-stat">
+                    <span class="preview-stat__value"><?= count($detected_pages) ?: '0' ?></span>
+                    <span class="preview-stat__label">Pages</span>
+                </span>
+                <span class="preview-stat">
+                    <span class="preview-stat__value"><?= (int) ($source_meta['component_count'] ?? 0) ?></span>
+                    <span class="preview-stat__label">Components</span>
+                </span>
+                <span class="preview-stat">
+                    <span class="preview-stat__value">~<?= $estimated_files ?></span>
+                    <span class="preview-stat__label">Output Files</span>
+                </span>
+                <?php if (!empty($source_meta['has_typescript'])): ?>
+                <span class="preview-stat">
+                    <span class="preview-stat__value">TS</span>
+                    <span class="preview-stat__label">TypeScript</span>
+                </span>
+                <?php endif; ?>
+                <?php if (!empty($source_meta['has_tailwind'])): ?>
+                <span class="preview-stat">
+                    <span class="preview-stat__value">TW</span>
+                    <span class="preview-stat__label">Tailwind</span>
+                </span>
+                <?php endif; ?>
             </div>
 
-            <!-- Right: Payment Card -->
-            <aside class="preview-payment" aria-label="Payment options">
+            <!-- Payment Card — the most prominent element -->
+            <div class="payment-card" aria-label="Payment options">
 
-                <div class="payment-card card">
-
-                    <div class="payment-card__header">
-                        <div class="payment-card__type">
-                            <?php if ($has_woocommerce): ?>
-                            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
-                                <rect x="2" y="6" width="16" height="11" rx="2" stroke="currentColor" stroke-width="1.5"/>
-                                <path d="M6 6V4a4 4 0 018 0v2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-                            </svg>
-                            WooCommerce Conversion
-                            <?php else: ?>
-                            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
-                                <path d="M4 4h12a1 1 0 011 1v10a1 1 0 01-1 1H4a1 1 0 01-1-1V5a1 1 0 011-1z" stroke="currentColor" stroke-width="1.5"/>
-                                <path d="M4 7h12" stroke="currentColor" stroke-width="1.5"/>
-                            </svg>
-                            Basic Conversion
-                            <?php endif; ?>
-                        </div>
-                        <div class="payment-card__price" aria-label="Price: <?= format_price($price_cents) ?>">
-                            <?= format_price($price_cents) ?>
-                        </div>
+                <div class="payment-card__header">
+                    <div class="payment-card__type">
+                        <?php if ($has_woocommerce): ?>
+                        <svg width="16" height="16" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+                            <rect x="2" y="6" width="16" height="11" rx="2" stroke="currentColor" stroke-width="1.5"/>
+                            <path d="M6 6V4a4 4 0 018 0v2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                        </svg>
+                        WooCommerce Conversion
+                        <?php else: ?>
+                        <svg width="16" height="16" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+                            <path d="M4 4h12a1 1 0 011 1v10a1 1 0 01-1 1H4a1 1 0 01-1-1V5a1 1 0 011-1z" stroke="currentColor" stroke-width="1.5"/>
+                            <path d="M4 7h12" stroke="currentColor" stroke-width="1.5"/>
+                        </svg>
+                        Basic Conversion
+                        <?php endif; ?>
                     </div>
+                    <div class="payment-card__price" aria-label="Price: <?= format_price($price_cents) ?>">
+                        <?= format_price($price_cents) ?>
+                    </div>
+                </div>
 
+                <div class="payment-card__body">
+
+                    <!-- Features list -->
                     <ul class="payment-card__features" role="list">
                         <li>
                             <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
@@ -344,7 +347,7 @@ ob_start();
                                 <circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.25"/>
                                 <path d="M5 8l2 2 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
                             </svg>
-                            Download available for <?= (int) config('download_expiry_days', 30) ?> days
+                            Download for <?= (int) config('download_expiry_days', 30) ?> days
                         </li>
                         <li>
                             <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
@@ -364,10 +367,10 @@ ob_start();
                             <input type="hidden" name="provider" value="stripe">
                             <button
                                 type="submit"
-                                class="btn btn--primary btn--full payment-btn payment-btn--stripe"
+                                class="btn btn--full payment-btn payment-btn--stripe"
                                 aria-label="Pay <?= format_price($price_cents) ?> with Stripe"
                             >
-                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                                     <rect x="2" y="5" width="20" height="14" rx="2" stroke="currentColor" stroke-width="1.5"/>
                                     <path d="M2 9h20" stroke="currentColor" stroke-width="1.5"/>
                                     <path d="M6 14h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
@@ -384,10 +387,10 @@ ob_start();
                             <input type="hidden" name="provider" value="paypal">
                             <button
                                 type="submit"
-                                class="btn btn--secondary btn--full payment-btn payment-btn--paypal"
+                                class="btn btn--full payment-btn payment-btn--paypal"
                                 aria-label="Pay <?= format_price($price_cents) ?> with PayPal"
                             >
-                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                                     <path d="M7 21h3l1-4h3c3 0 5-2 5-5s-2-5-5-5H8L5 21" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
                                     <path d="M11 12h2c2 0 3-1 3-3s-1-3-3-3H9L7 12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
                                 </svg>
@@ -397,41 +400,46 @@ ob_start();
 
                     </div>
 
+                </div>
+
+                <div class="payment-card__footer">
                     <p class="payment-card__note">
-                        <svg width="12" height="12" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-                            <path d="M8 2a6 6 0 100 12A6 6 0 008 2z" stroke="currentColor" stroke-width="1.25"/>
-                            <path d="M8 5v4M8 10v1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                        <svg width="13" height="13" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                            <path d="M8 1a5 5 0 00-5 5v1H2a1 1 0 00-1 1v6a1 1 0 001 1h12a1 1 0 001-1V8a1 1 0 00-1-1h-1V6a5 5 0 00-5-5zm3 6H5V6a3 3 0 016 0v1z" stroke="currentColor" stroke-width="1.25" fill="none"/>
                         </svg>
-                        Secure, encrypted payment. You will be redirected to the payment provider.
+                        Secure payment. Download available for <?= (int) config('download_expiry_days', 30) ?> days.
                     </p>
-
+                    <a href="<?= base_url('/') ?>" class="payment-card__cancel">
+                        Cancel &mdash; return to dashboard
+                    </a>
                 </div>
 
-                <!-- Source file info -->
-                <div class="preview-source-info">
-                    <p>
-                        <strong>File:</strong>
-                        <?= htmlspecialchars($conversion['original_filename'], ENT_QUOTES, 'UTF-8') ?>
-                    </p>
-                    <?php if (!empty($conversion['live_url'])): ?>
-                    <p>
-                        <strong>Live URL:</strong>
-                        <a href="<?= htmlspecialchars($conversion['live_url'], ENT_QUOTES, 'UTF-8') ?>"
-                           target="_blank" rel="noopener noreferrer" class="link">
-                            <?= htmlspecialchars($conversion['live_url'], ENT_QUOTES, 'UTF-8') ?>
-                        </a>
-                    </p>
-                    <?php endif; ?>
-                    <p>
-                        <strong>Analysed:</strong>
-                        <time datetime="<?= htmlspecialchars($conversion['created_at'], ENT_QUOTES, 'UTF-8') ?>">
-                            <?= htmlspecialchars(date('M j, Y \a\t g:ia', strtotime($conversion['created_at'])), ENT_QUOTES, 'UTF-8') ?>
-                        </time>
-                    </p>
-                </div>
+            </div>
 
-            </aside>
-        </div>
+            <!-- Source file info -->
+            <div class="preview-source-info">
+                <span>
+                    <strong>File:</strong>
+                    <?= htmlspecialchars($conversion['original_filename'], ENT_QUOTES, 'UTF-8') ?>
+                </span>
+                <?php if (!empty($conversion['live_url'])): ?>
+                <span>
+                    <strong>Live URL:</strong>
+                    <a href="<?= htmlspecialchars($conversion['live_url'], ENT_QUOTES, 'UTF-8') ?>"
+                       target="_blank" rel="noopener noreferrer" class="link">
+                        <?= htmlspecialchars($conversion['live_url'], ENT_QUOTES, 'UTF-8') ?>
+                    </a>
+                </span>
+                <?php endif; ?>
+                <span>
+                    <strong>Analysed:</strong>
+                    <time datetime="<?= htmlspecialchars($conversion['created_at'], ENT_QUOTES, 'UTF-8') ?>">
+                        <?= htmlspecialchars(date('M j, Y \a\t g:ia', strtotime($conversion['created_at'])), ENT_QUOTES, 'UTF-8') ?>
+                    </time>
+                </span>
+            </div>
+
+        </div><!-- /.preview-layout -->
 
         <?php endif; // end status check ?>
 
