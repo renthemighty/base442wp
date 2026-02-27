@@ -22,9 +22,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Server-side validation
     if (empty($name)) {
         $errors['name'] = 'Full name is required.';
-    } elseif (mb_strlen($name) < 2) {
+    } elseif (strlen($name) < 2) {
         $errors['name'] = 'Name must be at least 2 characters.';
-    } elseif (mb_strlen($name) > 100) {
+    } elseif (strlen($name) > 100) {
         $errors['name'] = 'Name must be 100 characters or fewer.';
     }
 
@@ -36,7 +36,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if (empty($password)) {
         $errors['password'] = 'Password is required.';
-    } elseif (mb_strlen($password) < 8) {
+    } elseif (strlen($password) < 8) {
         $errors['password'] = 'Password must be at least 8 characters.';
     }
 

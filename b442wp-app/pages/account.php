@@ -27,9 +27,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'profile') {
 
     if (empty($name)) {
         $profile_errors['name'] = 'Full name is required.';
-    } elseif (mb_strlen($name) < 2) {
+    } elseif (strlen($name) < 2) {
         $profile_errors['name'] = 'Name must be at least 2 characters.';
-    } elseif (mb_strlen($name) > 100) {
+    } elseif (strlen($name) > 100) {
         $profile_errors['name'] = 'Name must be 100 characters or fewer.';
     }
 
@@ -70,7 +70,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'password') {
 
     if (empty($new_pw)) {
         $password_errors['new'] = 'New password is required.';
-    } elseif (mb_strlen($new_pw) < 8) {
+    } elseif (strlen($new_pw) < 8) {
         $password_errors['new'] = 'New password must be at least 8 characters.';
     }
 

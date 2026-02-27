@@ -533,7 +533,7 @@ function delete_file_safe(string $path): void
 function generate_theme_name(string $filename): string
 {
     $name = pathinfo($filename, PATHINFO_FILENAME);
-    $name = mb_strtolower($name, 'UTF-8');
+    $name = strtolower($name);
     $name = preg_replace('/[^a-z0-9]+/', '-', $name) ?? '';
     $name = trim($name, '-');
     $name = preg_replace('/-{2,}/', '-', $name) ?? '';

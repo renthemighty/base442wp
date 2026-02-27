@@ -37,7 +37,7 @@ function _nav_active(string $path): string {
                 <a href="<?= base_url('/upload') ?>"<?= _nav_active('/upload') ?>>New Conversion</a>
                 <a href="<?= base_url('/account') ?>"<?= _nav_active('/account') ?>>
                     <span class="nav__account-avatar" aria-hidden="true">
-                        <?= htmlspecialchars(mb_strtoupper(mb_substr($_nav_user['name'] ?? 'U', 0, 1))) ?>
+                        <?= htmlspecialchars(strtoupper(substr($_nav_user['name'] ?? 'U', 0, 1))) ?>
                     </span>
                     <?= htmlspecialchars($_nav_user['name'] ?? 'Account') ?>
                 </a>
