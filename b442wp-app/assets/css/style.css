@@ -1500,23 +1500,23 @@ code {
 
 /* ── Theme header ── */
 .preview-theme-header {
-  padding-bottom: var(--space-4);
-  border-bottom:  1px solid var(--color-border);
-  margin-bottom:  var(--space-2);
+  padding-bottom: var(--space-5);
+  margin-bottom:  var(--space-1);
 }
 .preview-theme-name {
-  font-size:    var(--font-size-3xl);
-  font-weight:  800;
-  color:        var(--color-heading);
-  word-break:   break-all;
-  font-family:  var(--font-mono);
-  letter-spacing: -0.02em;
-  line-height:  1.15;
-  margin-bottom: var(--space-2);
+  font-size:      var(--font-size-3xl);
+  font-weight:    900;
+  color:          var(--color-heading);
+  word-break:     break-word;
+  letter-spacing: -0.025em;
+  line-height:    1.15;
+  margin-bottom:  var(--space-1);
+  background:     none;
+  -webkit-text-fill-color: var(--color-heading);
 }
 .preview-theme-sub {
-  font-size:  var(--font-size-sm);
-  color:      var(--color-slate-500);
+  font-size:     var(--font-size-sm);
+  color:         var(--color-slate-500);
   margin-bottom: var(--space-3);
 }
 
@@ -1637,6 +1637,54 @@ code {
   box-shadow: var(--shadow-md);
 }
 
+/* ── Font rows ── */
+.preview-fonts-list {
+  display: flex;
+  flex-direction: column;
+}
+.font-row {
+  display:     flex;
+  align-items: center;
+  gap:         var(--space-4);
+  padding:     var(--space-3) 0;
+  border-bottom: 1px solid var(--color-slate-50);
+}
+.font-row:last-child { border-bottom: none; }
+.font-preview {
+  font-size:   1.5rem;
+  font-weight: 700;
+  color:       var(--color-heading);
+  width:       3rem;
+  text-align:  center;
+  flex-shrink: 0;
+  line-height: 1;
+}
+.font-name {
+  font-size:   var(--font-size-sm);
+  font-weight: 600;
+  color:       var(--color-heading);
+  display:     block;
+}
+.font-stack {
+  font-size:      var(--font-size-xs);
+  color:          var(--color-slate-400);
+  font-family:    var(--font-mono);
+  display:        block;
+  max-width:      400px;
+  overflow:       hidden;
+  text-overflow:  ellipsis;
+  white-space:    nowrap;
+}
+
+/* ── Empty colors placeholder ── */
+.preview-empty-colors {
+  font-size:   var(--font-size-sm);
+  color:       var(--color-slate-400);
+  font-style:  italic;
+  margin:      0;
+  padding:     var(--space-3) 0 0;
+}
+
 /* ── Stats row ── */
 .preview-stats {
   display:   flex;
@@ -1644,21 +1692,32 @@ code {
   gap:       var(--space-3);
 }
 .preview-stat {
-  display:       inline-flex;
-  align-items:   center;
-  gap:           var(--space-2);
-  padding:       var(--space-2) var(--space-3);
-  background:    var(--color-slate-100);
-  border-radius: var(--radius-full);
+  flex:           1;
+  min-width:      80px;
+  display:        flex;
+  flex-direction: column;
+  align-items:    center;
+  padding:        var(--space-4) var(--space-3);
+  background:     var(--color-white);
+  border:         1px solid var(--color-border);
+  border-radius:  var(--radius-xl);
+  box-shadow:     0 1px 3px rgba(0,0,0,.04);
+  text-align:     center;
 }
 .preview-stat__value {
-  font-size:   var(--font-size-sm);
-  font-weight: 700;
+  display:     block;
+  font-size:   1.5rem;
+  font-weight: 900;
   color:       var(--color-heading);
+  line-height: 1;
 }
 .preview-stat__label {
-  font-size:  var(--font-size-sm);
-  color:      var(--color-slate-500);
+  display:        block;
+  font-size:      var(--font-size-xs);
+  color:          var(--color-slate-400);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-top:     var(--space-1);
 }
 
 /* ── Source info ── */
@@ -1675,11 +1734,21 @@ code {
 /* ── Payment card — the most prominent element ── */
 .payment-card {
   background:    var(--color-white);
-  border:        1px solid var(--color-border);
-  border-top:    3px solid var(--color-primary);
-  border-radius: var(--radius-xl);
-  box-shadow:    var(--shadow-md);
+  border:        2px solid #bfdbfe;
+  border-radius: 16px;
+  box-shadow:    0 4px 20px rgba(59,130,246,.08);
   padding:       var(--space-6);
+  position:      relative;
+  overflow:      hidden;
+}
+.payment-card::before {
+  content:  '';
+  position: absolute;
+  top:      0;
+  left:     0;
+  right:    0;
+  height:   4px;
+  background: linear-gradient(to right, #3b82f6, #2563eb);
 }
 
 .payment-card__header {
@@ -1699,7 +1768,7 @@ code {
   letter-spacing: 0.05em;
 }
 .payment-card__price {
-  font-size:      2.5rem;
+  font-size:      3rem;
   font-weight:    900;
   color:          var(--color-heading);
   letter-spacing: -0.03em;
@@ -1798,19 +1867,23 @@ code {
   color:       var(--color-white) !important;
 }
 .payment-btn--stripe:hover {
-  background:  var(--color-slate-700);
-  border-color: var(--color-slate-700);
+  background:    var(--color-slate-700);
+  border-color:  var(--color-slate-700);
   text-decoration: none;
+  transform:     translateY(-1px);
+  box-shadow:    0 4px 12px rgba(15,23,42,.2);
 }
 .payment-btn--paypal {
-  background:  #003087;
-  border-color: #003087;
+  background:  #2563eb;
+  border-color: #2563eb;
   color:       var(--color-white) !important;
 }
 .payment-btn--paypal:hover {
-  background:  #001f5a;
-  border-color: #001f5a;
+  background:    #1d4ed8;
+  border-color:  #1d4ed8;
   text-decoration: none;
+  transform:     translateY(-1px);
+  box-shadow:    0 4px 12px rgba(37,99,235,.3);
 }
 
 /* Responsive for payment card body */
@@ -1824,6 +1897,7 @@ code {
     align-items: flex-start;
   }
   .preview-theme-name { font-size: var(--font-size-2xl); }
+  .preview-stat { min-width: 0; flex: 1 1 calc(50% - var(--space-3)); }
 }
 
 /* --------------------------------------------------------------------------

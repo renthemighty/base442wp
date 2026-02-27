@@ -223,16 +223,44 @@ ob_start();
             <div class="card">
                 <h2 class="preview-section__title">Design Tokens</h2>
 
-                <?php if (!empty($fonts)): ?>
+                <?php if (!empty($fonts)):
+                    // Deduplicate and build friendly names
+                    $seen_font_keys = [];
+                    $unique_fonts   = [];
+                    foreach ($fonts as $f) {
+                        $key = strtolower(trim((string) $f));
+                        if (!in_array($key, $seen_font_keys, true)) {
+                            $seen_font_keys[] = $key;
+                            $unique_fonts[]   = (string) $f;
+                        }
+                    }
+                    function _preview_font_friendly(string $font): string {
+                        $l = strtolower($font);
+                        if (str_contains($l, 'ui-sans-serif') || str_contains($l, 'system-ui')) return 'System Sans-Serif';
+                        if (str_contains($l, 'ui-serif')      || str_contains($l, 'georgia'))   return 'System Serif';
+                        if (str_contains($l, 'ui-monospace')  || str_contains($l, 'monospace'))  return 'System Monospace';
+                        $first = trim(explode(',', $font)[0] ?? '', " \"'");
+                        $generic = ['sans-serif','serif','monospace','cursive','fantasy','system-ui'];
+                        if ($first !== '' && !in_array(strtolower($first), $generic, true)) return $first;
+                        return 'Custom Font';
+                    }
+                ?>
                 <div class="preview-tokens preview-tokens--fonts">
                     <h3 class="preview-tokens__label">Fonts</h3>
-                    <ul class="preview-tokens__list" role="list">
-                        <?php foreach (array_slice($fonts, 0, 6) as $font): ?>
-                        <li class="preview-tokens__font">
-                            <?= htmlspecialchars((string) $font, ENT_QUOTES, 'UTF-8') ?>
-                        </li>
+                    <div class="preview-fonts-list">
+                        <?php foreach (array_slice($unique_fonts, 0, 6) as $font):
+                            $safe_family = htmlspecialchars($font, ENT_QUOTES, 'UTF-8');
+                            $friendly    = htmlspecialchars(_preview_font_friendly($font), ENT_QUOTES, 'UTF-8');
+                        ?>
+                        <div class="font-row">
+                            <div class="font-preview" style="font-family: <?= $safe_family ?>">Aa</div>
+                            <div class="font-info">
+                                <span class="font-name"><?= $friendly ?></span>
+                                <span class="font-stack"><?= $safe_family ?></span>
+                            </div>
+                        </div>
                         <?php endforeach; ?>
-                    </ul>
+                    </div>
                 </div>
                 <?php endif; ?>
 
@@ -258,36 +286,36 @@ ob_start();
                     </ul>
                 </div>
                 <?php else: ?>
-                <p class="preview-tokens__label" style="margin-bottom:0">Default palette</p>
+                <p class="preview-empty-colors">Default palette &mdash; colors extracted from Tailwind classes during conversion.</p>
                 <?php endif; ?>
             </div>
             <?php endif; ?>
 
             <!-- Technical stats row -->
             <div class="preview-stats">
-                <span class="preview-stat">
+                <div class="preview-stat">
                     <span class="preview-stat__value"><?= count($detected_pages) ?: '0' ?></span>
                     <span class="preview-stat__label">Pages</span>
-                </span>
-                <span class="preview-stat">
+                </div>
+                <div class="preview-stat">
                     <span class="preview-stat__value"><?= (int) ($source_meta['component_count'] ?? 0) ?></span>
                     <span class="preview-stat__label">Components</span>
-                </span>
-                <span class="preview-stat">
+                </div>
+                <div class="preview-stat">
                     <span class="preview-stat__value">~<?= $estimated_files ?></span>
                     <span class="preview-stat__label">Output Files</span>
-                </span>
+                </div>
                 <?php if (!empty($source_meta['has_typescript'])): ?>
-                <span class="preview-stat">
+                <div class="preview-stat">
                     <span class="preview-stat__value">TS</span>
                     <span class="preview-stat__label">TypeScript</span>
-                </span>
+                </div>
                 <?php endif; ?>
                 <?php if (!empty($source_meta['has_tailwind'])): ?>
-                <span class="preview-stat">
+                <div class="preview-stat">
                     <span class="preview-stat__value">TW</span>
                     <span class="preview-stat__label">Tailwind</span>
-                </span>
+                </div>
                 <?php endif; ?>
             </div>
 
