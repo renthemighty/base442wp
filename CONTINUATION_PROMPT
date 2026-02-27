@@ -1,0 +1,450 @@
+# B442WP — Continuation Prompt
+# For future Claude Code sessions working on this repository
+# Last updated: v1.1.0
+
+==============================================================================
+## WHAT THIS PROJECT IS
+==============================================================================
+
+B442WP is a pay-per-conversion SaaS that converts Base44 React apps into
+production-ready WordPress themes. Users upload a Base44 ZIP export, get a
+free preview/analysis, pay once ($9 basic, $19 WooCommerce), and download
+a ready-to-upload WordPress theme ZIP.
+
+Live app: https://app.base44towordpress.com
+Marketing: https://base44towordpress.com
+
+Stack: PHP 8.0+, SQLite (PDO/WAL), zero framework, raw cURL for HTTP.
+Payments: Stripe Checkout (mode:"payment") + PayPal Orders v2.
+AI: Claude API (claude-sonnet-4-20250514) via messages endpoint.
+
+==============================================================================
+## REPOSITORY STRUCTURE
+==============================================================================
+
+renthemighty/base442wp
+└── claude/base44-wordpress-converter-x4KEi  ← active development branch
+
+/home/user/base442wp/                        ← local working copy
+├── CHANGES                                  ← plain-text changelog (no ext)
+├── VERSION                                  ← plain-text version (no ext)
+├── CONTINUATION_PROMPT                      ← this file
+├── screwed-theme/                           ← reference WP theme output
+│   ├── style.css                            ← WP theme header
+│   ├── functions.php                        ← setup, enqueue, Customizer
+│   ├── header.php / footer.php
+│   ├── front-page.php
+│   ├── index.php / page.php
+│   ├── template-parts/
+│   │   ├── hero.php
+│   │   ├── how-it-works.php
+│   │   ├── features.php
+│   │   ├── roadmap.php
+│   │   └── download-cta.php
+│   ├── assets/css/screwed-theme.css         ← 1685-line BEM CSS
+│   ├── assets/js/screwed-theme.js
+│   ├── inc/demo-content.php
+│   └── screwed-theme.zip
+├── scanner/                                 ← Node.js auto style scanner
+│   ├── scan-styles.js                       ← fetches live URL, extracts CSS vars
+│   ├── generate-css-vars.js
+│   └── package.json
+└── b442wp-app/                              ← THE PHP WEB APPLICATION
+    ├── index.php                            ← entry point
+    ├── router.php                           ← URL routing
+    ├── config.example.php                   ← copy to config.php (gitignored)
+    ├── .htaccess                            ← Apache rewrite + security
+    ├── .gitignore
+    ├── includes/
+    │   ├── db.php                           ← PDO singleton (db() function)
+    │   ├── auth.php                         ← register, login, session, reset
+    │   ├── helpers.php                      ← config(), base_url(), flash(), csrf_*
+    │   ├── middleware.php                   ← boot(), require_auth(), rate_limit()
+    │   ├── stripe.php                       ← Stripe Checkout + webhook verify
+    │   └── paypal.php                       ← PayPal Orders v2 + webhook verify
+    ├── database/
+    │   ├── schema.sql                       ← CREATE TABLE users, conversions, password_resets
+    │   ├── migrate.php                      ← CLI: php migrate.php (creates DB + dirs)
+    │   └── cleanup.php                      ← CLI/cron: expire downloads, mark stuck failed
+    ├── pages/
+    │   ├── login.php / register.php
+    │   ├── forgot-password.php / reset-password.php
+    │   ├── dashboard.php                    ← conversion history + status
+    │   ├── account.php                      ← profile + password change
+    │   ├── upload.php                       ← ZIP upload + free analysis
+    │   ├── preview.php                      ← show analysis, offer payment
+    │   ├── pay.php                          ← create Stripe/PayPal checkout session
+    │   ├── convert.php                      ← verify payment, run conversion, poll
+    │   ├── download.php                     ← serve ZIP with expiry check
+    │   ├── api-convert-status.php           ← JSON: {status, progress, message}
+    │   ├── webhook-stripe.php               ← Stripe webhook handler
+    │   └── webhook-paypal.php               ← PayPal webhook handler
+    ├── converter/
+    │   ├── Parser.php                       ← unzip, find source files, clean up
+    │   ├── Analyzer.php                     ← detect WooCommerce, archetype, colors, fonts
+    │   ├── ClaudeClient.php                 ← cURL to api.anthropic.com/v1/messages
+    │   ├── Converter.php                    ← orchestrate 8 AI generation steps
+    │   ├── Assembler.php                    ← write files, create ZIP output
+    │   └── prompts/
+    │       ├── system.php                   ← master system prompt (11 rules + Tailwind map)
+    │       ├── layout.php                   ← header.php + footer.php prompt
+    │       ├── home-section.php             ← per-section template-part prompt
+    │       ├── functions-gen.php            ← functions.php with Customizer prompt
+    │       └── css-gen.php                  ← theme.css generation prompt
+    ├── templates/
+    │   ├── layout.php                       ← HTML shell with flash messages
+    │   ├── header.php                       ← sticky nav with hamburger
+    │   └── footer.php                       ← 4-column footer
+    ├── assets/
+    │   ├── css/style.css                    ← 1469-line app CSS
+    │   └── js/app.js                        ← 499-line vanilla JS
+    ├── wp-skeleton/                         ← static WP template stubs
+    │   ├── style.css.tpl                    ← theme header comment
+    │   ├── functions-base.php.tpl           ← minimal functions.php base
+    │   ├── index.php.tpl
+    │   ├── page.php.tpl
+    │   ├── single.php.tpl
+    │   ├── 404.php.tpl
+    │   └── front-page.php.tpl
+    └── storage/                             ← gitignored, created by migrate.php
+        ├── database.sqlite
+        ├── uploads/                         ← temporary (cleaned after parse)
+        └── conversions/                     ← {uuid}/{prefix}-theme/ + {prefix}-theme.zip
+
+==============================================================================
+## FIRST-TIME SETUP
+==============================================================================
+
+1. Clone and switch to branch:
+   git clone https://github.com/renthemighty/base442wp.git
+   cd base442wp
+   git checkout claude/base44-wordpress-converter-x4KEi
+
+2. Configure:
+   cd b442wp-app
+   cp config.example.php config.php
+   # Edit config.php: set claude_api_key, stripe keys, paypal keys, urls
+
+3. Create database and storage:
+   php database/migrate.php
+
+4. Point Apache/Nginx vhost to b442wp-app/ with mod_rewrite.
+   The .htaccess handles URL rewriting.
+
+5. Set up daily cron (expire old downloads, mark stuck conversions):
+   0 2 * * * php /path/to/b442wp-app/database/cleanup.php
+
+6. Stripe webhook: point to https://app.base44towordpress.com/webhook/stripe
+   PayPal webhook: point to https://app.base44towordpress.com/webhook/paypal
+
+==============================================================================
+## KEY ARCHITECTURAL DECISIONS AND WHY
+==============================================================================
+
+### Why no framework?
+The spec explicitly requires "plain PHP 8.0+, SQLite, no framework, raw cURL
+for all external HTTP." Keeps the app deployable on any shared host with PHP.
+
+### Why SQLite?
+Low concurrency SaaS (one user → one conversion at a time per account).
+WAL mode allows concurrent reads. No MySQL setup overhead.
+
+### Why one-time payments only (NOT subscriptions)?
+Explicitly stated in the spec. Stripe mode is "payment" (never "subscription").
+PayPal intent is "CAPTURE". Subscriptions would require recurring billing logic
+that is explicitly out of scope.
+
+### Why raw <link> tag for Google Fonts (Rule 2)?
+WordPress's wp_enqueue_style() runs the URL through esc_url() which encodes
+the pipe character `|` in CSS API URLs like:
+  https://fonts.googleapis.com/css2?family=Inter|Roboto
+Breaking the font request. Solution: hook raw <link> tags via
+add_action('wp_head', ..., 5) before any other head output.
+
+### Why Customizer transport: 'postMessage' for live preview?
+Allows JS to update CSS custom properties on the fly without page reload,
+giving instant Customizer preview. The customizer_live_preview() function
+enqueues inline JS that regenerates :root CSS vars from postMessage events.
+
+### Why pre-compute variables before heredoc in prompts/functions-gen.php?
+PHP does not allow the ?? operator inside {$var} heredoc interpolations:
+  "{$data['colors']['primary'] ?? '#2563eb'}"  ← PARSE ERROR
+Must extract to variables first:
+  $default_primary = $data['colors']['primary'] ?? '#2563eb';
+  Then use {$default_primary} in heredoc.
+
+### Why fastcgi_finish_request() in convert.php?
+Sends the HTTP response to the browser (showing the progress polling UI)
+before the conversion actually starts. The conversion then runs server-side
+after the response is flushed. JS polls /api/convert-status/{uuid} every 3s.
+
+### Why realpath() security check in download.php?
+Prevents directory traversal attacks. The download UUID comes from the URL.
+Before serving any file, we resolve its real path and verify it starts with
+the storage/conversions/ directory prefix.
+
+### Why the 'parsed' status uses paid_at IS NULL check?
+The conversions table status flow is:
+  pending → parsed → paid → converting → complete → failed/expired
+The 'parsed' status means analysis is done but payment hasn't been received.
+The 'paid' status means payment webhook OR success-URL capture confirmed.
+
+### Why ai_calls_used counter?
+The conversion runs 8 AI calls (functions_php, header_footer, 1 per section,
+css, js, woocommerce if needed, demo_content). Tracking ai_calls_used allows
+the JS progress bar to show real progress (not just fake animation).
+
+==============================================================================
+## CONVERSION PIPELINE DETAILS
+==============================================================================
+
+The converter runs in this sequence (Converter.php orchestrates):
+
+1. Parser.php: ZipArchive::extractTo() to temp dir → find source files
+   - Extracts: globals.css, Layout.jsx, pages.config.js, pages/*, components/*
+   - Returns array of file paths + content
+
+2. Analyzer.php: Inspects source files
+   - WooCommerce detection: 5 signal types (component names, price fields,
+     entity definitions, Cart/Checkout imports, product API patterns)
+   - Archetype: landing / multi-page / ecommerce
+   - Color extraction: :root CSS vars + Tailwind arbitrary [#hex] classes
+   - Font detection: Google Fonts @import URLs in globals.css
+   - Page extraction: pages.config.js entity analysis
+   - Returns structured $data array
+
+3. Converter.php: 8 sequential Claude API calls
+   a. functions_php → functions.php
+   b. layout → header.php + footer.php
+   c. home_section × N → template-parts/{section}.php (one call per section)
+   d. page_templates → page-{slug}.php for each non-home page
+   e. css → assets/css/theme.css
+   f. js → assets/js/theme.js
+   g. woocommerce (if $has_woocommerce) → assets/css/woocommerce.css +
+      woocommerce/ template overrides
+   h. demo_content → inc/demo-content.php
+   Parses "=== filename.ext ===" delimiters from responses.
+   Updates ai_calls_used after each call.
+
+4. Assembler.php: Creates output directory tree
+   - {output_dir}/{uuid}/{prefix}-theme/
+   - Writes all generated files
+   - Copies wp-skeleton/ .tpl files, replacing {PREFIX}/{THEME_NAME} etc.
+   - Creates placeholder screenshot.png (GD or SVG fallback)
+   - ZipArchive creates {prefix}-theme.zip
+   - Returns zip path
+
+==============================================================================
+## CONVERTER RULES (enforced in prompts/system.php)
+==============================================================================
+
+Rule 1: Computed styles trump source code.
+  Base44's Vite plugin injects styles at runtime; globals.css source values
+  are often overridden. The scanner/scan-styles.js tool fetches the live URL
+  and uses Puppeteer's getComputedStyle() to get actual values.
+
+Rule 2: Never wp_enqueue_style for Google Fonts.
+  esc_url() mangles CSS2 axis values. Use add_action('wp_head', ..., 5).
+
+Rule 3: Tailwind line-height cascade.
+  text-Xnl sets BOTH font-size AND line-height simultaneously.
+  Responsive text-Xnl variants override standalone leading-* utilities.
+  Always check for responsive variants (sm:/md:/lg:/xl:).
+
+Rule 4: No blanket h1–h6 rules.
+  Set font-family globally on h1–h6. All other properties (weight, size,
+  line-height) must be set per component class, not globally.
+
+Rule 5: Customizer required.
+  Every theme must have WordPress Customizer support for:
+  - Colors (primary, accent, background, text) — WP_Customize_Color_Control
+  - Typography (heading_font, body_font, weights, sizes) — 25+ Google Fonts
+  - transport: 'postMessage' for live preview where meaningful
+
+Rule 6: Demo content importer.
+  inc/demo-content.php must be included. Provides one-click demo setup
+  accessible from Tools → {Theme Name} Demo Import.
+
+Rule 7: Color extraction.
+  Primary source: computed styles from live URL (Rule 1).
+  Fallback: :root vars in globals.css.
+  Fallback: Tailwind arbitrary [#hex] values in JSX/HTML.
+
+Rule 8: Animation replacement.
+  Framer Motion (Base44 uses it heavily) must be replaced with:
+  CSS transitions/animations + IntersectionObserver for scroll triggers.
+  No JS animation libraries in the output theme.
+
+Rule 9: CSS architecture.
+  BEM naming with theme prefix: .{prefix}-{block}__{element}--{modifier}
+  CSS custom properties for all design tokens (:root vars).
+  One theme.css file (no preprocessors).
+
+Rule 10: HTML preflight.
+  box-sizing: border-box on *, normalize margins, system font fallbacks,
+  smooth scroll, font-smoothing. All in :root / * selector.
+
+Rule 11: Naming conventions.
+  CSS prefix = PHP prefix = text-domain = theme folder name = theme handle.
+  Derived by slugifying the theme/app name (lowercase, hyphens, no specials).
+
+==============================================================================
+## PRICING AND PAYMENT FLOW
+==============================================================================
+
+Prices (in config.php, in cents):
+  price_basic:       900  = $9.00   (no WooCommerce)
+  price_woocommerce: 1900 = $19.00  (with WooCommerce)
+
+Stripe flow:
+  1. User clicks "Pay with Stripe" on preview.php
+  2. pay.php calls create_stripe_checkout() → Stripe API creates session
+  3. Redirect to Stripe hosted checkout
+  4. On success → /convert/{uuid}?stripe_session_id={id}
+  5. convert.php calls verify_stripe_session() → confirms payment_status=paid
+  6. Marks conversion 'paid', runs conversion, shows progress
+
+PayPal flow:
+  1. User clicks "Pay with PayPal" on preview.php
+  2. pay.php calls create_paypal_order() → PayPal Orders v2 API
+  3. Redirect to PayPal approval URL
+  4. On return → /convert/{uuid}?paypal_order_id={id}&paypal_token={t}
+  5. convert.php calls capture_paypal_order() → confirms COMPLETED status
+  6. Same as steps 5-6 above
+
+Webhooks are BACKUP only. Primary verification is in convert.php on redirect.
+CRITICAL: Stripe mode MUST be "payment" (never "subscription").
+CRITICAL: PayPal intent MUST be "CAPTURE" (never "AUTHORIZE").
+
+==============================================================================
+## DATABASE SCHEMA
+==============================================================================
+
+users:
+  id, email (unique), password_hash, name, created_at
+
+conversions:
+  id, uuid (unique UUID v4), user_id (FK→users),
+  status (pending|parsed|paid|converting|complete|failed|expired),
+  theme_name, source_filename, source_path, parsed_data (JSON),
+  has_woocommerce (bool), price_cents, payment_provider, payment_id,
+  payment_status, ai_calls_used, output_path, error_message,
+  created_at, paid_at, completed_at, expires_at
+
+password_resets:
+  id, user_id (FK→users), token (hex 64 chars), expires_at, used_at
+
+==============================================================================
+## SECURITY PATTERNS
+==============================================================================
+
+- CSRF: double-submit token stored in session, verified with hash_equals()
+- Auth: session_regenerate_id(true) on login, httponly/samesite=Lax cookies
+- Passwords: password_hash(BCRYPT, cost=12), password_verify()
+- SQL: PDO prepared statements only, no string interpolation in queries
+- File paths: realpath() + prefix check before serving downloads
+- Rate limiting: middleware.php rate_limit() using APCu or file-based counter
+- Input: sanitize_text_field() equivalent (strip_tags + trim) via sanitize()
+- Output: htmlspecialchars() via e() helper for all user-generated content
+- Upload: validates .zip extension, max 50MB, temp storage cleaned after parse
+- Webhook Stripe: verify_stripe_webhook() using hash_hmac HMAC-SHA256
+- Webhook PayPal: verifies via PayPal API callback validation
+
+==============================================================================
+## HELPER FUNCTIONS REFERENCE (includes/helpers.php)
+==============================================================================
+
+config(string $key, $default = null)  — read from config.php
+base_url(string $path = '/')          — construct absolute URL
+redirect(string $path)                — header Location + exit
+flash(string $key, string $msg, string $type='info')  — set flash message
+get_flash(string $key)                — consume flash (returns array or null)
+format_price(int $cents)              — "$9.00"
+uuid()                                — UUID v4 via random_bytes
+sanitize(string $input)               — strip_tags + trim
+e(string $input)                      — htmlspecialchars ENT_QUOTES UTF-8
+old(string $field, string $default)   — repopulate form fields after error
+save_old(array $fields)               — save POST values for old()
+csrf_token()                          — generate/return session CSRF token
+csrf_field()                          — output hidden input with token
+csrf_verify()                         — verify POST token or die(403)
+is_post()                             — $_SERVER['REQUEST_METHOD'] === 'POST'
+current_user()                        — session user array or null
+is_logged_in()                        — bool
+time_ago(string $datetime)            — "3 hours ago"
+days_until(string $datetime)          — int days until future datetime
+format_bytes(int $bytes)              — "4.2 MB"
+conversion_status_label(string $s)    — human label for status
+conversion_status_class(string $s)    — CSS badge class for status
+
+==============================================================================
+## SCANNER TOOL (scanner/scan-styles.js)
+==============================================================================
+
+WHY IT EXISTS: Rule 1 says computed live-site styles always override source
+code. Base44's Vite build injects CSS at runtime, so globals.css often doesn't
+reflect what the browser actually renders.
+
+HOW TO USE:
+  node scanner/scan-styles.js https://your-base44-app.com
+
+WHAT IT DOES:
+  1. Fetches HTML of the live URL
+  2. Downloads all linked CSS files
+  3. Parses :root {} custom properties from all CSS
+  4. Scans class= attributes for Tailwind utility classes
+  5. Detects Google Fonts <link> tags and extracts family names
+  6. Extracts color values (hex, hsl, oklch, rgb)
+  7. If puppeteer is installed: launches headless Chrome, calls
+     getComputedStyle() on key elements for true computed values
+  8. Outputs JSON: { colors, fonts, google_font_urls, css_vars }
+
+The Converter passes this output to Analyzer.php to enrich the $data array.
+
+==============================================================================
+## KNOWN ISSUES / GOTCHAS
+==============================================================================
+
+1. PHP heredoc + ?? operator:
+   NEVER use "{$array['key'] ?? 'default'}" inside a heredoc.
+   PHP parse error: unexpected token "??".
+   ALWAYS pre-compute: $var = $array['key'] ?? 'default'; then use {$var}.
+
+2. fastcgi_finish_request() availability:
+   Only available with PHP-FPM. On Apache+mod_php, use ob_flush()+flush().
+   convert.php should detect which is available.
+
+3. ZipArchive on shared hosting:
+   Some shared hosts disable ZipArchive. Consider shell_exec('zip') fallback.
+
+4. PayPal webhook verification:
+   PayPal's webhook verification requires calling their API (not local HMAC).
+   Requires stored webhook_id in config. See includes/paypal.php.
+
+5. SQLite concurrent writes:
+   WAL mode + busy_timeout=5000ms handles most cases. If conversions queue
+   grows large, consider a proper job queue (not needed at current scale).
+
+6. Stripe vs PayPal success URL difference:
+   Stripe appends ?session_id={CHECKOUT_SESSION_ID} automatically.
+   PayPal requires you to parse the return_url for ?token= and ?PayerID=.
+   Both handled in convert.php's payment verification block.
+
+==============================================================================
+## VERSION HISTORY (see CHANGES file for details)
+==============================================================================
+
+v1.0.0 — Screwed TOS theme + scanner tool
+v1.1.0 — Complete b442wp-app PHP SaaS application
+
+==============================================================================
+## ACTIVE BRANCH
+==============================================================================
+
+All development happens on:
+  claude/base44-wordpress-converter-x4KEi
+
+Push with:
+  git push -u origin claude/base44-wordpress-converter-x4KEi
+
+NEVER push to main/master without explicit instruction.
