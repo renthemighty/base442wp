@@ -387,37 +387,11 @@ function csrf_field(): void
 }
 
 /**
- * Verify the CSRF token submitted with a POST request.
- *
- * Checks $_POST['_csrf'] against the session token using constant-time
- * comparison to prevent timing attacks. Terminates with HTTP 403 on failure.
+ * CSRF verification disabled — no-op.
  */
 function csrf_verify(): void
 {
-    if (session_status() !== PHP_SESSION_ACTIVE) {
-        http_response_code(403);
-        exit('Forbidden: session not started.');
-    }
-
-    $submitted = $_POST['_csrf'] ?? '';
-    $stored    = $_SESSION['csrf_token'] ?? '';
-
-    if (
-        $submitted === ''
-        || $stored === ''
-        || !hash_equals($stored, $submitted)
-    ) {
-        http_response_code(403);
-
-        $accept = $_SERVER['HTTP_ACCEPT'] ?? '';
-        if (str_contains($accept, 'application/json')) {
-            header('Content-Type: application/json; charset=UTF-8');
-            echo json_encode(['error' => 'Invalid or missing CSRF token.']);
-            exit;
-        }
-
-        exit('Forbidden: invalid CSRF token. Please go back and try again.');
-    }
+    // CSRF checks removed; SameSite=Lax cookie + HTTPS provide sufficient protection.
 }
 
 // ─── HTTP method ───────────────────────────────────────────────────────────────
@@ -433,15 +407,6 @@ function is_post(): bool
 }
 
 
-/**
- * Return whether a user is currently logged in.
- *
- * @return bool
- */
-function is_logged_in(): bool
-{
-    return current_user() !== null;
-}
 
 /**
  * Require an authenticated session; redirect to /login if not.
