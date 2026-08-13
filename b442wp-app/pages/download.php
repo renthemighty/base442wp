@@ -324,6 +324,23 @@ ob_start();
 
         </div>
 
+        <!-- Satisfaction / refund notice -->
+        <div class="card feedback-notice" style="text-align:center;padding:1.75rem 2rem;background:#f8fafc;border:1.5px solid #e2e8f0;">
+            <p style="margin:0 0 0.5rem;font-size:1rem;color:#0f172a;font-weight:600;line-height:1.5;">
+                If this thing isn't what you expected, I want to know.
+            </p>
+            <p style="margin:0 0 1rem;font-size:0.9375rem;color:#334155;line-height:1.7;">
+                <a href="mailto:<?= htmlspecialchars((string) config('contact_email', 'support@base44towordpress.com'), ENT_QUOTES, 'UTF-8') ?>?subject=Refund+request+<?= urlencode(substr($uuid, 0, 8)) ?>"
+                   class="link" style="color:#2563eb;font-weight:500;">Send me an email</a>
+                and I'll give you your money back. No questions, no forms, just done.
+            </p>
+            <p style="margin:0;font-size:0.875rem;color:#64748b;line-height:1.6;">
+                Found a bug or something looks off?
+                <a href="mailto:<?= htmlspecialchars((string) config('contact_email', 'support@base44towordpress.com'), ENT_QUOTES, 'UTF-8') ?>?subject=Bug+report+<?= urlencode(substr($uuid, 0, 8)) ?>"
+                   class="link" style="color:#2563eb;">Tell me that too</a> — I actually want to fix it.
+            </p>
+        </div>
+
         <!-- Installation instructions -->
         <div class="card install-guide">
             <h2 class="install-guide__title">Installation Instructions</h2>
