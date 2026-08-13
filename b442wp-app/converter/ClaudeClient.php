@@ -13,6 +13,8 @@ class ClaudeClient
     private string $api_key;
     private string $model;
     private int    $max_tokens;
+    private int $tokens_input  = 0;
+    private int $tokens_output = 0;
 
     /** Anthropic API base URL. */
     private const API_URL = 'https://api.anthropic.com/v1/messages';
@@ -78,7 +80,7 @@ class ClaudeClient
      * @return string
      * @throws RuntimeException
      */
-    public function message_with_files(string $system, string $user, array $files): string
+    public function message_with_files(string $system, string $user, array $files, array $options = []): string
     {
         $file_block = '';
         foreach ($files as $file) {
@@ -97,7 +99,7 @@ class ClaudeClient
 
         $combined_user = $file_block . $user;
 
-        return $this->message($system, $combined_user);
+        return $this->message($system, $combined_user, $options);
     }
 
     // ─── Private helpers ──────────────────────────────────────────────────────
@@ -163,6 +165,9 @@ class ClaudeClient
             throw new RuntimeException("Claude API HTTP {$http_code}: {$msg}");
         }
 
+        $this->tokens_input  += (int) ($decoded['usage']['input_tokens']  ?? 0);
+        $this->tokens_output += (int) ($decoded['usage']['output_tokens'] ?? 0);
+
         return $decoded;
     }
 
@@ -206,5 +211,15 @@ class ClaudeClient
             'php'        => 'php',
             default      => '',
         };
+    }
+
+    /**
+     * Get accumulated token usage across all requests.
+     *
+     * @return array{input: int, output: int}
+     */
+    public function getTokenUsage(): array
+    {
+        return ['input' => $this->tokens_input, 'output' => $this->tokens_output];
     }
 }
