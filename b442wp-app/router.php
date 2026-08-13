@@ -189,6 +189,11 @@ switch (true) {
         $dispatch('pages/webhook-paypal.php');
         break;
 
+    // ── POST /api/convert-worker ───────────────────────────────────────────────
+    case $method === 'POST' && $seg0 === 'api' && $seg1 === 'convert-worker':
+        $dispatch('pages/api-convert-worker.php');
+        break;
+
     // ── GET /preview/{uuid} ────────────────────────────────────────────────────
     case $method === 'GET' && $seg0 === 'preview': {
         $uuid = $parse_uuid($seg1);

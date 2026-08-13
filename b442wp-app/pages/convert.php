@@ -115,109 +115,72 @@ if (isset($_GET['payment']) && $_GET['payment'] === 'success') {
 
         // ── Mark as paid and run conversion ───────────────────────────────────
 
-        if ($payment_verified && $status !== 'converting' && $status !== 'complete') {
-            // Persist payment confirmation
+        if ($payment_verified) {
+            // Persist payment metadata (idempotent — safe to run even if already paid)
             try {
                 $upd = db()->prepare(
                     'UPDATE conversions
-                        SET status          = :status,
-                            payment_status  = :pay_status,
+                        SET payment_status  = :pay_status,
                             payment_id      = COALESCE(NULLIF(:payment_id, \'\'), payment_id)
                       WHERE id = :id'
                 );
                 $upd->execute([
-                    ':status'     => 'paid',
                     ':pay_status' => 'paid',
                     ':payment_id' => $session_id,
                     ':id'         => (int) $conversion['id'],
                 ]);
-
-                // Refresh the local record
-                $conversion['status']         = 'paid';
-                $conversion['payment_status'] = 'paid';
-
             } catch (PDOException $e) {
                 error_log('[B442WP] Failed to update payment status for ' . $conversion['uuid'] . ': ' . $e->getMessage());
             }
 
-            // ── Run the conversion synchronously ──────────────────────────────
-            // Give the process as long as it needs; suppress client disconnects.
-            set_time_limit(0);
-            ignore_user_abort(true);
-
+            // Atomically claim the converting slot — only one concurrent request wins.
+            // The WHERE guard prevents double-conversion if webhook and browser return race.
             try {
-                // Mark as converting first (lets the status API show progress)
-                $conv_upd = db()->prepare(
-                    'UPDATE conversions SET status = :s WHERE id = :id'
+                $claim = db()->prepare(
+                    'UPDATE conversions
+                        SET status = \'converting\'
+                      WHERE id     = :id
+                        AND status NOT IN (\'converting\', \'complete\')'
                 );
-                $conv_upd->execute([':s' => 'converting', ':id' => (int) $conversion['id']]);
+                $claim->execute([':id' => (int) $conversion['id']]);
+            } catch (PDOException $e) {
+                error_log('[B442WP] Failed to claim converting slot for ' . $conversion['uuid'] . ': ' . $e->getMessage());
+                $claim = null;
+            }
+
+            if (!$claim || $claim->rowCount() === 0) {
+                // Another request already claimed converting (or conversion is complete) — nothing to do.
+                $status = $conversion['status'];
+            } else {
                 $conversion['status'] = 'converting';
-
-                // Reload full record for run_conversion()
-                $conv_stmt = db()->prepare('SELECT * FROM conversions WHERE id = :id LIMIT 1');
-                $conv_stmt->execute([':id' => (int) $conversion['id']]);
-                $fresh = $conv_stmt->fetch();
-
-                if ($fresh) {
-                    run_conversion($fresh);
-                }
-
-                // run_conversion updates status to 'complete'; redirect to download
-                redirect('/download/' . $conversion['uuid']);
-
-            } catch (Throwable $e) {
-                // Mark as failed
-                try {
-                    $fail = db()->prepare(
-                        'UPDATE conversions
-                            SET status = :s, error_message = :msg
-                          WHERE id = :id'
-                    );
-                    $fail->execute([
-                        ':s'   => 'failed',
-                        ':msg' => substr($e->getMessage(), 0, 1000),
-                        ':id'  => (int) $conversion['id'],
-                    ]);
-                } catch (PDOException) {
-                    // Best effort
-                }
-
-                $conversion['status']        = 'failed';
-                $conversion['error_message'] = $e->getMessage();
-                error_log('[B442WP] Conversion failed for ' . $conversion['uuid'] . ': ' . $e->getMessage());
+                $status = 'converting';
             }
-        }
 
-        // If already 'paid' (webhook beat us here), just fall through to render the progress page
+            // ── Fire the async worker and fall through to the progress page ──────
+            if ($status === 'converting') {
+                fire_conversion_worker($conversion['uuid']);
+                // Worker runs detached; JS poller on the progress page will redirect
+                // to /download/{uuid} once status becomes 'complete'.
+            }
+
+        // If already 'paid' (webhook beat us here), claim and fire worker now.
         if ($payment_verified && ($conversion['status'] ?? '') === 'paid') {
-            // The conversion hasn't started yet (webhook set 'paid' but no runner ran).
-            // Kick it off now.
             try {
-                set_time_limit(0);
-                ignore_user_abort(true);
+                $conv_upd = db()->prepare(
+                    "UPDATE conversions SET status = 'converting' WHERE id = :id AND status = 'paid'"
+                );
+                $conv_upd->execute([':id' => (int) $conversion['id']]);
 
-                $conv_upd = db()->prepare('UPDATE conversions SET status = :s WHERE id = :id');
-                $conv_upd->execute([':s' => 'converting', ':id' => (int) $conversion['id']]);
-
-                $conv_stmt = db()->prepare('SELECT * FROM conversions WHERE id = :id LIMIT 1');
-                $conv_stmt->execute([':id' => (int) $conversion['id']]);
-                $fresh = $conv_stmt->fetch();
-
-                if ($fresh) {
-                    run_conversion($fresh);
+                if ($conv_upd->rowCount() > 0) {
+                    $conversion['status'] = 'converting';
+                    fire_conversion_worker($conversion['uuid']);
                 }
-
-                redirect('/download/' . $conversion['uuid']);
-
-            } catch (Throwable $e) {
-                try {
-                    $fail = db()->prepare('UPDATE conversions SET status = :s, error_message = :msg WHERE id = :id');
-                    $fail->execute([':s' => 'failed', ':msg' => substr($e->getMessage(), 0, 1000), ':id' => (int) $conversion['id']]);
-                } catch (PDOException) {}
-                $conversion['status'] = 'failed';
-                error_log('[B442WP] Conversion failed (webhook path) for ' . $conversion['uuid'] . ': ' . $e->getMessage());
+            } catch (PDOException $e) {
+                error_log('[B442WP] Could not claim converting slot (webhook path) for ' . $conversion['uuid'] . ': ' . $e->getMessage());
             }
         }
+
+        } // end if ($payment_verified)
 
     } elseif ($status === 'converting') {
         // Already running — fall through to the progress page
@@ -226,58 +189,50 @@ if (isset($_GET['payment']) && $_GET['payment'] === 'success') {
     }
 }
 
-// ─── Conversion runner function ────────────────────────────────────────────────
+// ─── Async conversion launcher ────────────────────────────────────────────────
 
 /**
- * Execute the full conversion pipeline for a paid conversion.
+ * Fire a non-blocking POST to the conversion worker and return immediately.
  *
- * Requires converter/Converter.php and converter/Assembler.php.
- * Updates the conversions table to 'complete' on success.
+ * The worker closes its own HTTP connection straight away (Connection: close +
+ * Content-Length: 0 + flush) so it runs detached from LiteSpeed's per-request
+ * timeout even after this caller's response is sent.
  *
- * @param  array<string, mixed> $conversion  Fresh row from the conversions table.
- * @throws Throwable  Any exception from the pipeline is re-thrown for the caller to handle.
+ * CURLOPT_TIMEOUT=5 lets us verify the worker accepted the request (HTTP 200)
+ * without waiting for the pipeline to complete.
+ *
+ * @param  string $uuid  Conversion UUID.
+ * @return bool          true if worker responded 200, false on network/auth error.
  */
-function run_conversion(array $conversion): void
+function fire_conversion_worker(string $uuid): bool
 {
-    require_once APP_ROOT . '/converter/Converter.php';
-    require_once APP_ROOT . '/converter/Assembler.php';
+    $token    = hash_hmac('sha256', $uuid, (string) config('claude_api_key'));
+    $worker_url = rtrim((string) config('site_url', ''), '/') . '/api/convert-worker';
 
-    $source_data = json_decode((string) ($conversion['parsed_data'] ?? '{}'), true);
-
-    if (!is_array($source_data)) {
-        throw new RuntimeException('Conversion record has no valid parsed_data — cannot convert.');
+    $ch = curl_init($worker_url);
+    if ($ch === false) {
+        error_log('[B442WP] fire_conversion_worker: curl_init failed for ' . $uuid);
+        return false;
     }
 
-    // Run the converter
-    $converter = new Converter($conversion, $source_data);
-    $files     = $converter->convert();
-
-    // Assemble the output zip
-    $assembler = new Assembler((string) ($conversion['theme_name'] ?? 'wordpress-theme'));
-    $zip_path  = $assembler->assemble($files, $conversion);
-
-    // Verify the assembler produced a real file
-    if (!file_exists($zip_path)) {
-        throw new RuntimeException('Assembler did not produce an output zip at: ' . $zip_path);
-    }
-
-    // Persist completion
-    $expires_at = date('Y-m-d H:i:s', strtotime('+' . (int) config('download_expiry_days', 30) . ' days'));
-
-    $stmt = db()->prepare(
-        'UPDATE conversions
-            SET status           = :status,
-                output_zip_path  = :zip_path,
-                completed_at     = CURRENT_TIMESTAMP,
-                expires_at       = :expires_at
-          WHERE id = :id'
-    );
-    $stmt->execute([
-        ':status'    => 'complete',
-        ':zip_path'  => $zip_path,
-        ':expires_at'=> $expires_at,
-        ':id'        => (int) $conversion['id'],
+    curl_setopt_array($ch, [
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_POST           => true,
+        CURLOPT_POSTFIELDS     => http_build_query(['uuid' => $uuid, 'token' => $token]),
+        CURLOPT_TIMEOUT        => 5,
+        CURLOPT_FOLLOWLOCATION => false,
     ]);
+
+    $response  = curl_exec($ch);
+    $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    $curl_err  = curl_error($ch);
+    curl_close($ch);
+
+    if ($curl_err !== '') {
+        error_log('[B442WP] fire_conversion_worker curl error for ' . $uuid . ': ' . $curl_err);
+    }
+
+    return $http_code === 200;
 }
 
 // ─── Refresh status for the progress page ─────────────────────────────────────
