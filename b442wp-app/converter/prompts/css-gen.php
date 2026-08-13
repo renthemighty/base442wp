@@ -1,6 +1,9 @@
 <?php
 /**
  * CSS generation prompt — generates assets/css/theme.css.
+ *
+ * Enhanced: receives generated PHP template files so CSS matches the actual
+ * BEM classes used in the theme output, not just the source Tailwind classes.
  */
 
 declare(strict_types=1);
@@ -15,21 +18,11 @@ function prompt_css_system(): string
 /**
  * Build the user prompt for theme.css generation.
  *
- * @param array{
- *   theme_name: string,
- *   prefix: string,
- *   colors: array<string, string>,
- *   fonts: array{primary: string, secondary: string, primary_family: string, secondary_family: string},
- *   css_vars: array<string, string>,
- *   archetype: string,
- *   has_woocommerce: bool,
- *   sections: list<string>,
- *   pages: list<array{name: string, slug: string, file: string}>,
- *   globals_css: string|null,
- * } $data
- * @param list<string> $tailwind_classes  Unique Tailwind utility classes found in source
+ * @param array         $data              Merged parsed + analyzed data
+ * @param list<string>  $tailwind_classes   Unique Tailwind utility classes found in source
+ * @param array         $generated_files    Map of filename => PHP content already generated
  */
-function prompt_css_user(array $data, array $tailwind_classes): string
+function prompt_css_user(array $data, array $tailwind_classes, array $generated_files = []): string
 {
     $theme_name      = $data['theme_name']     ?? 'My Theme';
     $prefix          = $data['prefix']         ?? 'theme';
@@ -40,7 +33,17 @@ function prompt_css_user(array $data, array $tailwind_classes): string
     // Colors
     $colors_list = '';
     foreach ($data['colors'] as $key => $val) {
+        if ($key === '_all_vars') continue;
         $colors_list .= "  --color-{$key}: {$val}\n";
+    }
+
+    // Original project CSS vars
+    $project_vars = '';
+    if (!empty($data['colors']['_all_vars'])) {
+        $project_vars = "\n### Original project CSS custom properties (preserve these)\n";
+        foreach ($data['colors']['_all_vars'] as $var => $val) {
+            $project_vars .= "  {$var}: {$val}\n";
+        }
     }
 
     // Source CSS vars
@@ -49,30 +52,72 @@ function prompt_css_user(array $data, array $tailwind_classes): string
         $css_vars_list .= "  {$var}: {$val}\n";
     }
 
+    // Custom CSS classes from globals.css
+    $custom_classes_block = '';
+    if (!empty($data['custom_classes'])) {
+        $custom_classes_block = "\n### Custom CSS classes from globals.css — MUST be replicated in theme.css\n```css\n";
+        foreach ($data['custom_classes'] as $class => $body) {
+            $custom_classes_block .= "{$class} {\n  {$body}\n}\n";
+        }
+        $custom_classes_block .= "```\n";
+    }
+
     // Sections list
     $sections_list = implode(', ', $sections);
 
-    // Tailwind classes — limit display to 150 for prompt brevity
+    // Tailwind classes
     $tw_classes_display = '';
     if (!empty($tailwind_classes)) {
-        $sample = array_slice($tailwind_classes, 0, 150);
+        $sample = array_slice($tailwind_classes, 0, 200);
         $tw_classes_display = implode(' ', $sample);
-        if (count($tailwind_classes) > 150) {
-            $tw_classes_display .= ' [... ' . (count($tailwind_classes) - 150) . ' more]';
+        if (count($tailwind_classes) > 200) {
+            $tw_classes_display .= ' [... ' . (count($tailwind_classes) - 200) . ' more]';
         }
     }
 
-    // Globals CSS (truncated)
+    // Globals CSS
     $globals_block = '';
     if (!empty($data['globals_css'])) {
-        $truncated = strlen($data['globals_css']) > 6000
-            ? substr($data['globals_css'], 0, 6000) . "\n/* ... truncated */"
-            : $data['globals_css'];
-        $globals_block = "=== globals.css (Base44 source) ===\n```css\n{$truncated}\n```\n\n";
+        $globals_block = "=== globals.css (Base44 source) ===\n```css\n{$data['globals_css']}\n```\n\n";
+    }
+
+    // Generated PHP files — extract BEM classes so CSS matches exactly
+    $generated_classes_block = '';
+    if (!empty($generated_files)) {
+        $all_classes = [];
+        foreach ($generated_files as $filename => $content) {
+            // Extract class="..." patterns from generated PHP
+            preg_match_all('/class\s*=\s*["\']([^"\']+)["\']/', $content, $m);
+            foreach ($m[1] as $class_str) {
+                foreach (explode(' ', $class_str) as $cls) {
+                    $cls = trim($cls);
+                    // Only include BEM classes with the theme prefix
+                    if (str_starts_with($cls, $prefix . '-') || str_starts_with($cls, 'theme-animate')) {
+                        $all_classes[$cls] = true;
+                    }
+                }
+            }
+        }
+
+        if (!empty($all_classes)) {
+            $generated_classes_block = "\n### BEM classes used in generated PHP templates (CSS MUST define all of these)\n";
+            $generated_classes_block .= "```\n" . implode("\n", array_keys($all_classes)) . "\n```\n";
+        }
+    }
+
+    // Source component excerpts for visual reference
+    $source_excerpts = '';
+    $source_budget = 15000;
+    $source_used = 0;
+    foreach (array_merge($data['components'] ?? [], $data['pages'] ?? []) as $path => $content) {
+        if (!is_string($content) || $source_used >= $source_budget) break;
+        $chunk = strlen($content) > 3000 ? substr($content, 0, 3000) . "\n// [truncated]" : $content;
+        $source_excerpts .= "=== " . basename((string) $path) . " ===\n```jsx\n{$chunk}\n```\n\n";
+        $source_used += strlen($chunk);
     }
 
     $woo_note = $has_woocommerce
-        ? "\n### WooCommerce note\nInclude a `/* === WOOCOMMERCE === */` section at the end with basic WooCommerce overrides: shop grid, product card, add-to-cart button, cart table, checkout form. Match the theme's color and typography system.\n"
+        ? "\n### WooCommerce note\nDo NOT include WooCommerce CSS here — it goes in a separate `assets/css/woocommerce.css` file.\n"
         : '';
 
     return <<<PROMPT
@@ -82,18 +127,25 @@ function prompt_css_user(array $data, array $tailwind_classes): string
 ## Sections: {$sections_list}
 
 ### Color tokens
-{$colors_list}
-### Source CSS custom properties (from globals.css)
+{$colors_list}{$project_vars}
+
+### Source CSS custom properties
 {$css_vars_list}
+
 ### Fonts
 Primary: {$data['fonts']['primary']}
 Secondary: {$data['fonts']['secondary']}
 
 ### Tailwind utility classes found in source
 {$tw_classes_display}
+{$custom_classes_block}{$generated_classes_block}{$woo_note}
 
-### Source
-{$globals_block}{$woo_note}
+---
+
+## Source reference
+
+{$globals_block}
+{$source_excerpts}
 
 ---
 
@@ -102,7 +154,6 @@ Secondary: {$data['fonts']['secondary']}
 Generate the complete `assets/css/theme.css` for the **{$theme_name}** theme.
 
 ### Architecture (Rule 9 — required order)
-The file must be structured in this exact order with comment dividers:
 
 ```
 /* =========================================================
@@ -112,146 +163,45 @@ The file must be structured in this exact order with comment dividers:
 
 /* 1. CSS Custom Properties (variables)        */
 /* 2. HTML Preflight / Reset (Rule 10)         */
-/* 3. Typography                               */
+/* 3. Typography + Custom Classes              */
 /* 4. Layout Utilities                         */
-/* 5. Header & Navigation                      */
-/* 6. [Section components - one per section]   */
+/* 5. Header & Navigation + Announcement Bar   */
+/* 6. Section components (one per section)     */
 /* 7. Footer                                   */
-/* 8. Buttons & Form elements                  */
-/* 9. Utility classes (.theme-animate etc.)    */
-/* 10. Responsive breakpoints                  */
-[optional: WOOCOMMERCE section]
+/* 8. Inner page styles                        */
+/* 9. Buttons & Form elements                  */
+/* 10. Utility classes (.theme-animate etc.)   */
+/* 11. Responsive breakpoints                  */
 ```
 
 ### Section 1: CSS Custom Properties
-Define ALL of these on `:root`:
+MUST include:
+- All color tokens extracted from the source
+- ALL original project CSS custom properties (the --{$prefix}-* vars)
+- Font family, weight, and size variables
+- Spacing, transition, and radius variables
+
+### Section 3: Typography + Custom Classes
+- `h1-h6 { font-family: var(--font-heading); }` (NO blanket weight — Rule 4)
+- **Replicate ALL custom CSS classes** from globals.css (e.g. .oria-heading, .oria-label, .oria-body, .oria-display, etc.)
+- These are critical — the PHP templates use these classes
+
+### Sections 5-7: Component CSS
+- Generate COMPLETE CSS for every section, header, and footer
+- **Convert Tailwind utilities to exact CSS values** using the mapping table
+- Match the visual design exactly: gradients, shadows, spacing, hover effects
+- Card hover effects, image zoom transitions, badge styles
+- For each breakpoint: map both font-size AND line-height (Rule 3)
+
+### Section 11: Responsive breakpoints (mobile-first)
 ```css
-:root {
-    /* Colors — override via Customizer inline CSS */
-    --color-primary:    [extracted primary color];
-    --color-accent:     [extracted accent];
-    --color-background: [extracted bg];
-    --color-text:       [extracted text];
-    --color-muted:      [extracted muted or auto-derived];
-    --color-border:     [extracted border or rgba of text at 15%];
-
-    /* Typography — override via Customizer inline CSS */
-    --font-heading: {$data['fonts']['primary']};
-    --font-body:    {$data['fonts']['primary']};
-    --font-mono:    ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-    --font-weight-heading: 700;
-    --font-weight-body:    400;
-
-    /* Font sizes */
-    --font-size-hero:            3.75rem;
-    --font-size-section-heading: 2.25rem;
-    --font-size-body:            1rem;
-
-    /* Spacing */
-    --section-padding-y: 5rem;
-    --container-max:     80rem;
-    --container-px:      1.5rem;
-
-    /* Transitions */
-    --transition-base:   150ms ease;
-    --transition-slow:   300ms ease;
-
-    /* Border radius */
-    --radius-sm:  0.25rem;
-    --radius-md:  0.5rem;
-    --radius-lg:  0.75rem;
-    --radius-xl:  1rem;
-    --radius-full: 9999px;
-}
+@media (min-width: 640px) { /* sm */ }
+@media (min-width: 768px) { /* md */ }
+@media (min-width: 1024px) { /* lg */ }
+@media (min-width: 1280px) { /* xl */ }
 ```
-
-### Section 2: HTML Preflight (Rule 10 — MUST be included verbatim)
-```css
-html {
-    -webkit-text-size-adjust: 100%;
-    scroll-behavior: smooth;
-    box-sizing: border-box;
-}
-*, *::before, *::after { box-sizing: inherit; }
-body {
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-    margin: 0;
-    padding: 0;
-    background-color: var(--color-background);
-    color: var(--color-text);
-    font-family: var(--font-body);
-    font-weight: var(--font-weight-body);
-    font-size: var(--font-size-body);
-    line-height: 1.5;
-}
-img, picture, video, canvas, svg { display: block; max-width: 100%; }
-input, button, textarea, select { font: inherit; }
-p, h1, h2, h3, h4, h5, h6 { overflow-wrap: break-word; }
-```
-
-### Section 3: Typography (Rule 4 — NO blanket h1-h6 weight)
-```css
-/* Only set font-family globally on headings */
-h1, h2, h3, h4, h5, h6 {
-    font-family: var(--font-heading);
-    /* DO NOT set font-weight or line-height here — set per component */
-}
-```
-Then set specific heading sizes and weights ONLY within component classes (`.{$prefix}-hero__title`, `.{$prefix}-section__title`, etc.)
-
-### Section 4: Layout utilities
-Define `.{$prefix}-container` (max-width: var(--container-max), padding: 0 var(--container-px), margin: 0 auto) and common layout helpers.
-
-### Sections 5–7: Component CSS
-For each of the detected sections ({$sections_list}), generate complete component CSS.
-
-- Every CSS class MUST use the `{$prefix}` prefix with BEM: `.{$prefix}-[block]__[element]--[modifier]`
-- Map Tailwind classes from source to exact CSS values using the mapping table in the system prompt
-- For responsive text sizes, remember Rule 3: map line-height separately per breakpoint
-- Faithfully recreate the visual design from the source: gradients, shadows, spacing, colors
-
-### Section 8: Buttons & Forms
-Define base button styles and form input styles that match the theme's design language.
-
-### Section 9: Utility classes
-```css
-/* Scroll animations (Rule 8) */
-.theme-animate {
-    opacity: 0;
-    transform: translateY(30px);
-    transition: opacity .6s ease, transform .6s ease;
-}
-.theme-animate--visible {
-    opacity: 1;
-    transform: translateY(0);
-}
-
-/* Screen reader only */
-.sr-only {
-    position: absolute; width: 1px; height: 1px;
-    padding: 0; margin: -1px; overflow: hidden;
-    clip: rect(0,0,0,0); white-space: nowrap; border: 0;
-}
-```
-
-### Section 10: Responsive breakpoints (mobile-first)
-```css
-/* sm: 640px */
-@media (min-width: 640px) { ... }
-/* md: 768px */
-@media (min-width: 768px) { ... }
-/* lg: 1024px */
-@media (min-width: 1024px) { ... }
-/* xl: 1280px */
-@media (min-width: 1280px) { ... }
-```
-
-For each breakpoint, write ALL relevant overrides (font-sizes, grid columns, spacing, visibility). Remember Rule 3 for responsive font-size + line-height.
 
 ### Output format
-
-Output exactly one file:
 
 === assets/css/theme.css ===
 [complete CSS — no placeholders, no TODOs, production-ready]

@@ -9,7 +9,7 @@ declare(strict_types=1);
 
 function prompt_system(): string
 {
-    return <<<'PROMPT'
+    $base = <<<'PROMPT'
 You are an expert WordPress theme developer converting Base44 React applications into production-ready WordPress themes.
 
 Your output must be clean, well-commented PHP/HTML/CSS/JS that a professional WordPress developer would be proud to ship. Never produce placeholder stubs — always generate complete, functional code.
@@ -339,4 +339,14 @@ When asked to produce multiple files, separate each file with:
 
 Always produce complete, runnable code — never use placeholder comments like `// TODO` or `/* Add more here */`. The output will be deployed directly to production.
 PROMPT;
+
+    $learnings_file = __DIR__ . '/learnings.md';
+    if (is_readable($learnings_file)) {
+        $learnings = trim(file_get_contents($learnings_file));
+        if ($learnings !== '') {
+            $base .= "\n\n---\n\n## LEARNED PATTERNS FROM REAL CONVERSIONS\n\nThe following lessons were recorded from actual site conversions. Apply them proactively — do not wait to encounter the same problem again.\n\n" . $learnings;
+        }
+    }
+
+    return $base;
 }

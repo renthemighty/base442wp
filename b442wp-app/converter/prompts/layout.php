@@ -1,6 +1,7 @@
 <?php
 /**
- * Layout prompt — generates header.php and footer.php.
+ * Layout prompt — generates header.php and footer.php from actual
+ * Header.jsx, Footer.jsx, AnnouncementBar.jsx, and Layout.jsx source.
  */
 
 declare(strict_types=1);
@@ -15,26 +16,18 @@ function prompt_layout_system(): string
 /**
  * Build the user prompt for header.php + footer.php generation.
  *
- * @param array{
- *   theme_name: string,
- *   prefix: string,
- *   colors: array<string, string>,
- *   fonts: array{primary: string, secondary: string, primary_family: string, secondary_family: string},
- *   css_vars: array<string, string>,
- *   nav_items: list<array{label: string, href: string}>,
- *   layout_jsx: string|null,
- *   globals_css: string|null,
- * } $data
+ * @param array  $data            Merged parsed + analyzed data
+ * @param array  $layout_sources  Map of component name => source code
  */
-function prompt_layout_user(array $data): string
+function prompt_layout_user(array $data, array $layout_sources = []): string
 {
-    $theme_name = $data['theme_name'] ?? 'My Theme';
-    $prefix     = $data['prefix']     ?? 'theme';
-    $nav_items  = $data['nav_items']  ?? [];
-    $layout_jsx = $data['layout_jsx'] ?? null;
+    $theme_name  = $data['theme_name'] ?? 'My Theme';
+    $prefix      = $data['prefix']     ?? 'theme';
+    $nav_items   = $data['nav_items']  ?? [];
+    $layout_jsx  = $data['layout_jsx'] ?? null;
     $globals_css = $data['globals_css'] ?? null;
 
-    // Build nav items list
+    // Nav items
     $nav_list = '';
     foreach ($nav_items as $item) {
         $nav_list .= "  - {$item['label']} → {$item['href']}\n";
@@ -43,26 +36,53 @@ function prompt_layout_user(array $data): string
         $nav_list = "  (no explicit nav items detected — use pages from get_pages())\n";
     }
 
-    // Build colors summary
+    // Colors
     $colors_summary = '';
     foreach ($data['colors'] as $key => $val) {
+        if ($key === '_all_vars') continue;
         $colors_summary .= "  --color-{$key}: {$val}\n";
     }
+    if (!empty($data['colors']['_all_vars'])) {
+        $colors_summary .= "\n  /* Original project CSS vars */\n";
+        foreach ($data['colors']['_all_vars'] as $var => $val) {
+            $colors_summary .= "  {$var}: {$val}\n";
+        }
+    }
 
-    // Build CSS vars summary
+    // CSS vars
     $css_vars_summary = '';
     foreach ($data['css_vars'] as $var => $val) {
         $css_vars_summary .= "  {$var}: {$val}\n";
     }
 
-    // Source files block
-    $source_block = '';
-    if ($layout_jsx !== null) {
-        $source_block .= "=== Layout.jsx (Base44 source) ===\n```jsx\n{$layout_jsx}\n```\n\n";
+    // Custom classes
+    $custom_classes_ref = '';
+    if (!empty($data['custom_classes'])) {
+        $custom_classes_ref = "\n### Custom CSS classes from source\n";
+        foreach ($data['custom_classes'] as $class => $body) {
+            $custom_classes_ref .= "{$class} { {$body} }\n";
+        }
     }
+
+    // Source files — include ALL layout-related components
+    $source_block = '';
+
+    // Layout.jsx
+    if ($layout_jsx !== null) {
+        $source_block .= "=== Layout.jsx ===\n```jsx\n{$layout_jsx}\n```\n\n";
+    }
+
+    // Shared components (Header, Footer, AnnouncementBar, Logo, etc.)
+    foreach ($layout_sources as $name => $source) {
+        if (!empty($source) && !str_starts_with($source, '/*')) {
+            $source_block .= "=== {$name} ===\n```jsx\n{$source}\n```\n\n";
+        }
+    }
+
+    // globals.css
     if ($globals_css !== null) {
-        $truncated = strlen($globals_css) > 8000 ? substr($globals_css, 0, 8000) . "\n/* ... truncated */" : $globals_css;
-        $source_block .= "=== globals.css (Base44 source) ===\n```css\n{$truncated}\n```\n\n";
+        $truncated = strlen($globals_css) > 12000 ? substr($globals_css, 0, 12000) . "\n/* ... truncated */" : $globals_css;
+        $source_block .= "=== globals.css ===\n```css\n{$truncated}\n```\n\n";
     }
 
     return <<<PROMPT
@@ -75,50 +95,55 @@ Colors:
 Fonts:
   Primary: {$data['fonts']['primary']}
   Secondary: {$data['fonts']['secondary']}
+{$custom_classes_ref}
 
 ### Detected navigation items
 {$nav_list}
 
-### Source files
+---
+
+## Source files
+
 {$source_block}
+
 ---
 
 ## Your task
 
-Generate complete, production-ready WordPress `header.php` and `footer.php` files for the **{$theme_name}** theme.
+Generate complete, production-ready WordPress `header.php` and `footer.php` that **faithfully replicate** the visual design from the React source above.
 
 ### header.php requirements
-- Starts with `<?php get_header(); ?>` pattern — actually, header.php IS the header; begin with `<?php` then `get_header()` is not called here. Output the full `<!DOCTYPE html>` opening, `<head>`, and opening `<body>` + `<header>` markup.
-- `<!DOCTYPE html>` with proper lang attribute using `language_attributes()`
-- `<head>` must include: `wp_head()`, charset meta, viewport meta, `bloginfo('name')` title tag
-- Sticky header with:
-  - Site logo via `get_custom_logo()` with `bloginfo('name')` text fallback
-  - Primary navigation menu rendered via `wp_nav_menu()` with theme location 'primary'
-  - Accessible mobile hamburger button (aria-expanded, aria-controls)
-  - Mobile menu drawer that slides in/out via JS class toggle
-  - The header must become sticky on scroll (add `.is-sticky` class via JS when scrollTop > 80)
-- BEM class names using `{$prefix}` prefix (e.g. `{$prefix}-header`, `{$prefix}-nav__link`)
-- All interactive behaviour (mobile toggle, sticky) handled by inline `<script>` at bottom of the file
+- Full `<!DOCTYPE html>` opening with `language_attributes()`, `<head>` with `wp_head()`, charset, viewport
+- **Announcement bar** if present in source (the bar above the main header — replicate its content and style)
+- Sticky header matching source design:
+  - Site logo via `get_custom_logo()` with text fallback
+  - Primary navigation via `wp_nav_menu()` with theme location 'primary'
+  - Cart icon link (if WooCommerce detected): link to `wc_get_cart_url()` with dynamic count
+  - Accessible mobile hamburger (aria-expanded, aria-controls)
+  - Mobile drawer that slides in/out matching the source design
+- BEM class names: `{$prefix}-header`, `{$prefix}-nav__link`, `{$prefix}-announcement`, etc.
+- Replicate the EXACT colors, spacing, font sizes from the source components
+- Sticky header JS: add `.is-sticky` when scrollY > threshold (match source threshold)
 
 ### footer.php requirements
-- Complete `<footer>` markup closing the page
-- Footer columns: site name/tagline | nav links | copyright notice with current year via `date('Y')`
-- `wp_footer()` call before `</body>`
-- Social links (if detected in source): use placeholder `#` hrefs
-- Copyright line: `© <?php echo date('Y'); ?> <?php bloginfo('name'); ?>. All rights reserved.`
+- **Newsletter signup section** if present in source (replicate the layout and copy)
+- Footer columns matching source: site info, nav links organized by category
+- Use `wp_nav_menu()` for footer menus where appropriate, or hardcode the structure matching source
+- Copyright line with `date('Y')` and `bloginfo('name')`
+- Social links if detected
+- Disclaimer text if present in source
+- `wp_footer()` before `</body>`
 - BEM class names with `{$prefix}` prefix
 
-### General requirements
-- NO inline styles — all styling comes from assets/css/theme.css
-- All strings wrapped in `__( '...', '{$prefix}' )` for translation
-- Use `<?php echo esc_url( home_url('/') ); ?>` for home link
-- Use `<?php echo esc_url( get_stylesheet_directory_uri() ); ?>` for any asset references
-- Mobile menu must be keyboard-accessible (focus trap not required, but Escape key closes it)
-- The header `<nav>` must have `aria-label="Primary navigation"`
+### General rules
+- NO inline styles — all CSS in assets/css/theme.css
+- All strings: `__('...', '{$prefix}')` for translation
+- Home link: `<?php echo esc_url(home_url('/')); ?>`
+- Assets: `<?php echo esc_url(get_stylesheet_directory_uri()); ?>`
+- Preserve image URLs from source as placeholders
+- Mobile menu: keyboard-accessible, Escape closes it
 
 ### Output format
-
-Output exactly two files separated by the delimiter:
 
 === header.php ===
 [complete header.php content]

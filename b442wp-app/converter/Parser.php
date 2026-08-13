@@ -63,14 +63,20 @@ class Parser
             $globals_css  = null;
             $layout_jsx  = null;
             $pages_config = null;
+            $app_jsx     = null;
+            $tailwind_config = null;
 
             foreach ($files as $rel_path => $content) {
                 $basename = basename($rel_path);
                 $lower    = strtolower($basename);
+                $lower_stem = strtolower(pathinfo($basename, PATHINFO_FILENAME));
 
                 // ── Special files ────────────────────────────────────────────
-                if ($lower === 'globals.css' || $lower === 'global.css') {
-                    $globals_css = $content;
+                if ($lower === 'globals.css' || $lower === 'global.css' || $lower === 'index.css') {
+                    // Prefer globals.css; index.css is fallback
+                    if ($globals_css === null || $lower !== 'index.css') {
+                        $globals_css = $content;
+                    }
                 }
 
                 if (
@@ -87,6 +93,16 @@ class Parser
                     || $lower === 'pages.config.ts'
                 ) {
                     $pages_config = $content;
+                }
+
+                if (str_starts_with($lower, 'tailwind.config')) {
+                    $tailwind_config = $content;
+                }
+
+                if (in_array($lower_stem, ['app', '_app'], true)
+                    && in_array(strtolower(pathinfo($basename, PATHINFO_EXTENSION)), ['jsx', 'tsx', 'js', 'ts'], true)
+                ) {
+                    $app_jsx = $content;
                 }
 
                 // ── Pages vs Components ───────────────────────────────────────
@@ -121,16 +137,18 @@ class Parser
             }
 
             return [
-                'files'        => $files,
-                'globals_css'  => $globals_css,
-                'layout_jsx'   => $layout_jsx,
-                'pages_config' => $pages_config,
-                'pages'        => $pages,
-                'components'   => $components,
-                'file_tree'    => $file_tree,
-                'has_typescript' => $has_typescript,
-                'has_tailwind'   => $has_tailwind,
-                'raw_zip_size'   => $raw_zip_size,
+                'files'           => $files,
+                'globals_css'     => $globals_css,
+                'layout_jsx'      => $layout_jsx,
+                'pages_config'    => $pages_config,
+                'app_jsx'         => $app_jsx,
+                'tailwind_config' => $tailwind_config,
+                'pages'           => $pages,
+                'components'      => $components,
+                'file_tree'       => $file_tree,
+                'has_typescript'  => $has_typescript,
+                'has_tailwind'    => $has_tailwind,
+                'raw_zip_size'    => $raw_zip_size,
             ];
         } finally {
             $this->cleanup();
