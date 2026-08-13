@@ -124,8 +124,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         goto render_form;
     }
 
-    // 6. Run Parser then Analyzer (free — no payment required at this stage)
+    // 6. Run LiveScanner (Stage 0), Parser, then Analyzer
     try {
+        // Stage 0: Playwright live scan — ground-truth design data from the live URL.
+        // Runs before Parser so the Analyzer can override zip-based extraction.
+        // Returns null silently on any error (Base44 editor URLs, network issues, no Node).
+        require_once __DIR__ . '/../converter/LiveScanner.php';
+
+        $scan_dir  = APP_ROOT . '/storage/scans/' . $conversion_uuid;
+        $scanner   = new LiveScanner();
+        $live_scan = $scanner->scan($live_url, $scan_dir);
+
         require_once __DIR__ . '/../converter/Parser.php';
 
         $parser      = new Parser($stored_path);
@@ -134,7 +143,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         require_once __DIR__ . '/../converter/Analyzer.php';
 
         $analyzer     = new Analyzer();
-        $analysis     = $analyzer->analyze($source_data);
+        $analysis     = $analyzer->analyze($source_data, $live_scan);
 
         // Derive theme name and pricing from analysis
         $has_woocommerce = !empty($analysis['has_woocommerce']);
