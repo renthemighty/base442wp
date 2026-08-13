@@ -1,0 +1,17 @@
+# Project-level protection rules
+# Prevent accidental commits of workspace files and backups
+
+# Claude Code workspace files - NEVER commit
+CLAUDE.md
+Memory.md
+Backlog.md
+.claude/
+memory/
+
+# Deployment backup convention
+*.bak-*
+*.removed-*
+
+# System files
+.DS_Store
+Thumbs.db
