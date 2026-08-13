@@ -175,10 +175,11 @@ function verify_conversion_owner(string $uuid): array
         $stmt = db()->prepare(
             'SELECT *
                FROM conversions
-              WHERE uuid = :uuid
+              WHERE uuid    = :uuid
+                AND user_id = :user_id
               LIMIT 1'
         );
-        $stmt->execute([':uuid' => $uuid]);
+        $stmt->execute([':uuid' => $uuid, ':user_id' => (int) $user['id']]);
         $conversion = $stmt->fetch();
     } catch (PDOException) {
         flash('error', 'A database error occurred.', 'error');
@@ -186,12 +187,7 @@ function verify_conversion_owner(string $uuid): array
     }
 
     if (!$conversion) {
-        flash('error', 'Conversion not found.', 'error');
-        redirect('/');
-    }
-
-    if ((int) $conversion['user_id'] !== (int) $user['id']) {
-        // Do not reveal that the conversion exists to other users
+        // Do not reveal whether the conversion exists to other users
         flash('error', 'Conversion not found.', 'error');
         redirect('/');
     }
