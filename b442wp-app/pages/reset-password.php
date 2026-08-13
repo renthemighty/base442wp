@@ -29,7 +29,7 @@ if (!$token_error && $_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if (empty($new_password)) {
         $errors['password'] = 'New password is required.';
-    } elseif (mb_strlen($new_password) < 8) {
+    } elseif (strlen($new_password) < 8) {
         $errors['password'] = 'Password must be at least 8 characters.';
     }
 

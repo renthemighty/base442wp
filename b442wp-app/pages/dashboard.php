@@ -23,7 +23,7 @@ function _dash_conversion_display(array $c): array {
     $expires_at  = $c['expires_at'] ?? null;
 
     // Label
-    $label = status_label($status);
+    $label = conversion_status_label($status);
 
     // Badge class
     $badge_class = match(true) {

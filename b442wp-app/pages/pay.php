@@ -27,7 +27,7 @@ require_auth();
 // GET requests shouldn't hit this endpoint directly; redirect to preview
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     // If we have a UUID from the route, bounce to preview
-    $uuid = ROUTE_UUID;
+    $uuid = $_REQUEST['uuid'] ?? '';
     if ($uuid !== '') {
         redirect('/preview/' . $uuid);
     }
@@ -40,7 +40,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 csrf_verify();
 
 // 2. Load conversion and verify ownership
-$conversion = verify_conversion_owner(ROUTE_UUID);
+$conversion = verify_conversion_owner($_REQUEST['uuid'] ?? '');
 $status     = $conversion['status'] ?? '';
 
 // Only allow payment initiation from 'parsed' or a previously-attempted 'unpaid' state.
@@ -55,7 +55,7 @@ if (!in_array($status, ['parsed', 'unpaid'], true)) {
     ];
 
     $target = $redirect_map[$status] ?? '/';
-    flash('info', 'This conversion is currently in status: ' . status_label($status) . '.', 'info');
+    flash('info', 'This conversion is currently in status: ' . conversion_status_label($status) . '.', 'info');
     redirect($target);
 }
 

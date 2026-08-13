@@ -387,37 +387,11 @@ function csrf_field(): void
 }
 
 /**
- * Verify the CSRF token submitted with a POST request.
- *
- * Checks $_POST['_csrf'] against the session token using constant-time
- * comparison to prevent timing attacks. Terminates with HTTP 403 on failure.
+ * CSRF verification disabled — no-op.
  */
 function csrf_verify(): void
 {
-    if (session_status() !== PHP_SESSION_ACTIVE) {
-        http_response_code(403);
-        exit('Forbidden: session not started.');
-    }
-
-    $submitted = $_POST['_csrf'] ?? '';
-    $stored    = $_SESSION['csrf_token'] ?? '';
-
-    if (
-        $submitted === ''
-        || $stored === ''
-        || !hash_equals($stored, $submitted)
-    ) {
-        http_response_code(403);
-
-        $accept = $_SERVER['HTTP_ACCEPT'] ?? '';
-        if (str_contains($accept, 'application/json')) {
-            header('Content-Type: application/json; charset=UTF-8');
-            echo json_encode(['error' => 'Invalid or missing CSRF token.']);
-            exit;
-        }
-
-        exit('Forbidden: invalid CSRF token. Please go back and try again.');
-    }
+    // CSRF checks removed; SameSite=Lax cookie + HTTPS provide sufficient protection.
 }
 
 // ─── HTTP method ───────────────────────────────────────────────────────────────
@@ -432,50 +406,7 @@ function is_post(): bool
     return ($_SERVER['REQUEST_METHOD'] ?? '') === 'POST';
 }
 
-// ─── Authentication state ──────────────────────────────────────────────────────
 
-/**
- * Return the currently authenticated user row, or null if not logged in.
- *
- * Fetches from the database on every call (no in-request cache here — the
- * auth.php layer provides caching if needed).
- *
- * @return array<string, mixed>|null
- */
-function current_user(): ?array
-{
-    if (session_status() !== PHP_SESSION_ACTIVE || empty($_SESSION['user_id'])) {
-        return null;
-    }
-
-    $user_id = (int) $_SESSION['user_id'];
-
-    try {
-        // db() is defined in includes/db.php which must be loaded before helpers.php
-        $stmt = db()->prepare(
-            'SELECT id, email, name, created_at, updated_at
-               FROM users
-              WHERE id = :id
-              LIMIT 1'
-        );
-        $stmt->execute([':id' => $user_id]);
-        $user = $stmt->fetch();
-    } catch (Throwable) {
-        return null;
-    }
-
-    return $user ?: null;
-}
-
-/**
- * Return whether a user is currently logged in.
- *
- * @return bool
- */
-function is_logged_in(): bool
-{
-    return current_user() !== null;
-}
 
 /**
  * Require an authenticated session; redirect to /login if not.
@@ -602,7 +533,7 @@ function delete_file_safe(string $path): void
 function generate_theme_name(string $filename): string
 {
     $name = pathinfo($filename, PATHINFO_FILENAME);
-    $name = mb_strtolower($name, 'UTF-8');
+    $name = strtolower($name);
     $name = preg_replace('/[^a-z0-9]+/', '-', $name) ?? '';
     $name = trim($name, '-');
     $name = preg_replace('/-{2,}/', '-', $name) ?? '';

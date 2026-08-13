@@ -215,12 +215,22 @@ ob_start();
 <div class="page-content">
     <div class="container container--narrow">
 
+        <!-- Back link — top left -->
+        <div class="page-back">
+            <a href="<?= base_url('/') ?>" class="link--muted">
+                <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                    <path d="M10 3L5 8l5 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                Back to dashboard
+            </a>
+        </div>
+
         <!-- Page Header -->
-        <div class="page-header">
+        <div class="page-header page-header--simple">
             <div class="page-header__text">
                 <h1 class="page-header__title">Upload Your Base44 Project</h1>
                 <p class="page-header__subtitle">
-                    Upload your Base44 project zip. We'll analyse it for free, then you can review and pay.
+                    Upload your project zip and live URL. We'll analyse it for free — no payment yet.
                 </p>
             </div>
         </div>
@@ -252,11 +262,6 @@ ob_start();
 
                 <!-- Drag-and-drop upload area -->
                 <div class="form-group">
-                    <label class="form-label" for="source_zip">
-                        Base44 Project Zip
-                        <span class="form-label__required" aria-hidden="true">*</span>
-                    </label>
-
                     <div
                         class="upload-area"
                         data-upload-area
@@ -268,14 +273,14 @@ ob_start();
                     >
                         <div class="upload-area__icon" aria-hidden="true">
                             <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
-                                <circle cx="24" cy="24" r="23" stroke="#e2e8f0" stroke-width="1.5"/>
-                                <path d="M24 30V18M20 22l4-4 4 4" stroke="#6366f1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                                <path d="M16 34h16" stroke="#94a3b8" stroke-width="1.75" stroke-linecap="round"/>
+                                <circle cx="24" cy="24" r="23" fill="#eff6ff" stroke="#dbeafe" stroke-width="1.5"/>
+                                <path d="M24 30V18M20 22l4-4 4 4" stroke="#3b82f6" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                <path d="M16 34h16" stroke="#93c5fd" stroke-width="2" stroke-linecap="round"/>
                             </svg>
                         </div>
                         <p class="upload-area__primary">
                             <span class="upload-area__cta">Click to choose a file</span>
-                            or drag and drop here
+                            &nbsp;or drag and drop here
                         </p>
                         <p class="upload-area__secondary" id="upload-hint">
                             .zip files only &mdash; Max 50 MB
@@ -312,7 +317,7 @@ ob_start();
                         aria-describedby="live_url_hint"
                     >
                     <p class="form-hint" id="live_url_hint">
-                        The public URL where your Base44 app is currently running. Used for reference during conversion.
+                        The public URL where your Base44 app is currently running.
                     </p>
                 </div>
 
@@ -322,19 +327,19 @@ ob_start();
                     <ol class="upload-explainer__steps">
                         <li>
                             <span class="upload-explainer__step-num" aria-hidden="true">1</span>
-                            <span><strong>Upload</strong> your Base44 project zip and live URL &mdash; free.</span>
+                            <span><strong>Upload</strong> your zip &amp; URL — free</span>
                         </li>
                         <li>
                             <span class="upload-explainer__step-num" aria-hidden="true">2</span>
-                            <span><strong>Preview</strong> the detected pages, design tokens, and theme details.</span>
+                            <span><strong>Preview</strong> pages &amp; design tokens</span>
                         </li>
                         <li>
                             <span class="upload-explainer__step-num" aria-hidden="true">3</span>
-                            <span><strong>Pay once</strong> to convert &mdash; Basic <?= format_price((int) config('price_basic', 900)) ?>, WooCommerce <?= format_price((int) config('price_woocommerce', 1900)) ?>.</span>
+                            <span><strong>Pay once</strong> — Basic <?= format_price((int) config('price_basic', 900)) ?> or WooCommerce <?= format_price((int) config('price_woocommerce', 1900)) ?></span>
                         </li>
                         <li>
                             <span class="upload-explainer__step-num" aria-hidden="true">4</span>
-                            <span><strong>Download</strong> your ready-to-install WordPress theme zip. Available for <?= (int) config('download_expiry_days', 30) ?> days.</span>
+                            <span><strong>Download</strong> your WordPress theme zip</span>
                         </li>
                     </ol>
                 </div>
@@ -343,31 +348,17 @@ ob_start();
                 <div class="form-actions">
                     <button
                         type="submit"
-                        class="btn btn--primary btn--lg btn--full"
+                        class="btn btn--primary btn--full upload-submit-btn"
                         id="upload-submit-btn"
                     >
-                        <svg width="18" height="18" viewBox="0 0 20 20" fill="none" aria-hidden="true">
-                            <path d="M10 14V6M7 9l3-3 3 3" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/>
-                            <path d="M4 16h12" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"/>
-                        </svg>
                         Analyse for Free &rarr;
                     </button>
                     <p class="form-actions__note">
-                        No payment is required at this step.
+                        No payment required at this step.
                     </p>
                 </div>
 
             </form>
-        </div>
-
-        <!-- Back link -->
-        <div class="page-back">
-            <a href="<?= base_url('/') ?>" class="link link--muted">
-                <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-                    <path d="M10 3L5 8l5 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
-                Back to dashboard
-            </a>
         </div>
 
     </div>
