@@ -2144,3 +2144,60 @@ code {
   border-color: var(--color-green-100);
   color:        var(--color-green-600);
 }
+
+/* ── Coupon form ──────────────────────────────────────────────── */
+.payment-card__coupon {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--color-border);
+}
+.coupon-form__label {
+  display: block;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--color-slate-500);
+  margin-bottom: 0.5rem;
+}
+.coupon-form__row {
+  display: flex;
+  gap: 0.5rem;
+}
+.coupon-form__input {
+  flex: 1;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.875rem;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  border: 1px solid var(--color-border);
+  border-radius: 0.5rem;
+  background: var(--color-white);
+  color: var(--color-heading);
+  transition: border-color 150ms ease;
+}
+.coupon-form__input:focus {
+  outline: none;
+  border-color: var(--color-blue-500);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, .15);
+}
+.coupon-form__input::placeholder {
+  color: var(--color-slate-400);
+  text-transform: none;
+  letter-spacing: normal;
+  font-family: inherit;
+}
+.coupon-form__btn {
+  padding: 0.5rem 1rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  white-space: nowrap;
+  border-radius: 0.5rem;
+  border: 1px solid var(--color-blue-600);
+  background: var(--color-blue-600);
+  color: var(--color-white);
+  cursor: pointer;
+  transition: background 150ms ease;
+}
+.coupon-form__btn:hover {
+  background: var(--color-blue-500);
+}

@@ -59,7 +59,85 @@ if (!in_array($status, ['parsed', 'unpaid'], true)) {
     redirect($target);
 }
 
-// 3. Validate provider
+// 3. Check for coupon code (free conversion bypass)
+$coupon_code = trim(strtoupper((string) ($_POST['coupon_code'] ?? '')));
+
+if ($coupon_code !== '') {
+    // Validate the coupon
+    try {
+        $coupon_stmt = db()->prepare(
+            'SELECT * FROM coupons WHERE code = :code LIMIT 1'
+        );
+        $coupon_stmt->execute([':code' => $coupon_code]);
+        $coupon = $coupon_stmt->fetch();
+    } catch (PDOException) {
+        $coupon = null;
+    }
+
+    $coupon_error = null;
+    if (!$coupon) {
+        $coupon_error = 'Invalid coupon code.';
+    } elseif ($coupon['times_used'] >= $coupon['max_uses']) {
+        $coupon_error = 'This coupon has been fully redeemed.';
+    } elseif (!empty($coupon['expires_at']) && strtotime($coupon['expires_at']) < time()) {
+        $coupon_error = 'This coupon has expired.';
+    }
+
+    if ($coupon_error !== null) {
+        flash('error', $coupon_error, 'error');
+        redirect('/preview/' . $conversion['uuid']);
+    }
+
+    // Coupon is valid and type is 'free' — skip payment entirely
+    if ($coupon['discount_type'] === 'free') {
+        try {
+            // Mark conversion as paid (via coupon)
+            $upd = db()->prepare(
+                'UPDATE conversions
+                    SET status          = :status,
+                        payment_provider = :provider,
+                        payment_id       = :payment_id,
+                        payment_status   = :pay_status
+                  WHERE id = :id'
+            );
+            $upd->execute([
+                ':status'     => 'paid',
+                ':provider'   => 'coupon',
+                ':payment_id' => 'COUPON:' . $coupon_code,
+                ':pay_status' => 'paid',
+                ':id'         => (int) $conversion['id'],
+            ]);
+
+            // Increment coupon usage atomically — guard prevents double-redemption under concurrent requests
+            $inc = db()->prepare('UPDATE coupons SET times_used = times_used + 1 WHERE id = :id AND times_used < max_uses');
+            $inc->execute([':id' => (int) $coupon['id']]);
+            if ($inc->rowCount() === 0) {
+                flash('error', 'This coupon has already been fully redeemed.', 'error');
+                redirect('/preview/' . $conversion['uuid']);
+            }
+
+            // Record redemption
+            $red = db()->prepare(
+                'INSERT INTO coupon_redemptions (coupon_id, user_id, conversion_id) VALUES (:cid, :uid, :cvid)'
+            );
+            $red->execute([
+                ':cid'  => (int) $coupon['id'],
+                ':uid'  => (int) $conversion['user_id'],
+                ':cvid' => (int) $conversion['id'],
+            ]);
+
+            flash('success', 'Coupon applied! Your conversion is starting now.', 'success');
+            redirect('/convert/' . $conversion['uuid'] . '?payment=success');
+
+        } catch (PDOException $e) {
+            error_log('[B442WP] Coupon redemption failed: ' . $e->getMessage());
+            flash('error', 'Something went wrong applying your coupon. Please try again.', 'error');
+            redirect('/preview/' . $conversion['uuid']);
+        }
+    }
+}
+
+// 4. Validate provider
 $provider = trim(strtolower((string) ($_POST['provider'] ?? '')));
 
 if (!in_array($provider, ['stripe', 'paypal'], true)) {

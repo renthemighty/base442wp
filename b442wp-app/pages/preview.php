@@ -428,6 +428,26 @@ ob_start();
 
                     </div>
 
+                    <!-- Coupon code -->
+                    <div class="payment-card__coupon">
+                        <form method="POST" action="<?= base_url('/pay/' . $conversion['uuid']) ?>" class="coupon-form">
+                            <?php csrf_field(); ?>
+                            <label for="coupon_code" class="coupon-form__label">Have a coupon?</label>
+                            <div class="coupon-form__row">
+                                <input
+                                    type="text"
+                                    id="coupon_code"
+                                    name="coupon_code"
+                                    placeholder="Enter code"
+                                    class="coupon-form__input"
+                                    autocomplete="off"
+                                    spellcheck="false"
+                                >
+                                <button type="submit" class="btn btn--sm coupon-form__btn">Apply</button>
+                            </div>
+                        </form>
+                    </div>
+
                 </div>
 
                 <div class="payment-card__footer">
