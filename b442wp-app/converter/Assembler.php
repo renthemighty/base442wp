@@ -106,8 +106,12 @@ class Assembler
      */
     private function write_file(string $base_dir, string $relative_path, string $content): void
     {
-        // Sanitize path (prevent directory traversal)
-        $relative_path = ltrim(str_replace(['../', '..\\'], '', $relative_path), '/');
+        // Sanitize path: loop until stable so ....// double-encoding can't survive a single pass
+        do {
+            $prev          = $relative_path;
+            $relative_path = str_replace(['../', '..\\.', '..'], '', $relative_path);
+        } while ($relative_path !== $prev);
+        $relative_path = ltrim($relative_path, '/\\');
 
         if ($relative_path === '') {
             return;
@@ -118,6 +122,15 @@ class Assembler
 
         if (!is_dir($dir)) {
             mkdir($dir, 0750, true);
+        }
+
+        // Confirm resolved path is still inside base_dir (catches symlink tricks and edge cases)
+        $resolved_dir  = realpath($dir);
+        $resolved_base = realpath($base_dir);
+        if ($resolved_dir === false || $resolved_base === false
+            || strncmp($resolved_dir . DIRECTORY_SEPARATOR, $resolved_base . DIRECTORY_SEPARATOR, strlen($resolved_base) + 1) !== 0
+        ) {
+            return;
         }
 
         file_put_contents($full_path, $content);
