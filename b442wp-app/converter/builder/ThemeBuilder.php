@@ -27,7 +27,7 @@ class ThemeBuilder
      * BUILDER-CHANGELOG.md. Echoed at build start so cron.log records which
      * version built each job.
      */
-    public const BUILDER_VERSION = '4.4.0';  // output-quality caps removed: page cap 25 to 200, product extraction now chunked and tier-driven instead of hardcapped at 25, media import cap 200 to 2000, WXR truncation 150000 to 2000000 with logging. See BUILDER-CHANGELOG.md.
+    public const BUILDER_VERSION = '4.4.1';  // worker.php bundle fallback: when the app-server cache has no CSS/JS bundle for a job, fetch it straight from the live site instead of building with no stylesheet. Ported from fred-drive.php v4.2.0. See BUILDER-CHANGELOG.md.
 
     /**
      * v4.4.0: output-fidelity ceilings. Accuracy is the only target for this
