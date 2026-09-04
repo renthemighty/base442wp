@@ -28,7 +28,7 @@ require_once dirname(__DIR__) . '/includes/middleware.php';
 // Must be authenticated
 require_auth();
 
-$uuid = $_REQUEST['uuid'] ?? '';
+$uuid = defined('ROUTE_UUID') ? ROUTE_UUID : ($_REQUEST['uuid'] ?? '');
 
 if (empty($uuid)) {
     flash('error', 'Invalid download link.', 'error');
@@ -66,6 +66,72 @@ $is_expired_dl  = ($expires_ts !== false && time() > $expires_ts);
 $days_left      = ($expires_ts !== false && !$is_expired_dl)
     ? (int) ceil(($expires_ts - time()) / 86400)
     : null;
+
+// ─── Install-zip unwrap (v3.3.1) ──────────────────────────────────────────────
+// output_zip_path stores the OUTER bundle zip (theme/<slug>-theme.zip +
+// data/ WXR exports; pre-v4.3.1 builds also carried the unpacked theme tree
+// at theme/<slug>-theme/). Uploading that wrapper to WordPress fails with
+// "The theme is missing the style.css stylesheet" because WP's installer
+// only looks for style.css at the zip root or one directory deep — style.css
+// sits at depth 2 (or inside a nested zip). Confirmed live on job #147
+// (customer complaint, 2026-08-11). Default download now serves the INNER
+// installable theme zip, extracted once and cached alongside the outer file;
+// ?file=bundle serves the original full bundle for the data/WXR exports.
+
+/**
+ * Extract the inner installable theme zip (theme/<slug>-theme.zip) out of an
+ * outer bundle zip, cache it next to the outer file, and return its path.
+ * Returns '' when no inner zip exists or extraction fails — callers then
+ * serve the outer file unchanged (never break the download).
+ */
+function b442_materialize_install_zip(string $outer_zip): string
+{
+    $cache = $outer_zip . '.install.zip';
+    if (is_file($cache) && filesize($cache) > 0 && filemtime($cache) >= filemtime($outer_zip)) {
+        return $cache;
+    }
+    if (!class_exists('ZipArchive')) {
+        return '';
+    }
+    $za = new ZipArchive();
+    if ($za->open($outer_zip) !== true) {
+        return '';
+    }
+    $entry = '';
+    for ($i = 0; $i < $za->numFiles; $i++) {
+        $name = (string) $za->getNameIndex($i);
+        if (preg_match('#^theme/[^/]+\.zip$#', $name)) {
+            $entry = $name;
+            break;
+        }
+    }
+    if ($entry === '') {
+        $za->close();
+        return '';
+    }
+    $stream = $za->getStream($entry);
+    if ($stream === false) {
+        $za->close();
+        return '';
+    }
+    $tmp = $cache . '.tmp';
+    $out = @fopen($tmp, 'wb');
+    if ($out === false) {
+        fclose($stream);
+        $za->close();
+        return '';
+    }
+    stream_copy_to_stream($stream, $out);
+    fclose($out);
+    fclose($stream);
+    $za->close();
+    if (!is_file($tmp) || filesize($tmp) === 0) {
+        @unlink($tmp);
+        return '';
+    }
+    @rename($tmp, $cache);
+    return (is_file($cache) && filesize($cache) > 0) ? $cache : '';
+}
 
 // ─── Direct download trigger (?action=download) ───────────────────────────────
 
@@ -106,6 +172,22 @@ if (isset($_GET['action']) && $_GET['action'] === 'download') {
     $safe_slug      = preg_replace('/[^a-z0-9\-_]/i', '-', $theme_name) ?? 'wordpress-theme';
     $download_name  = strtolower($safe_slug) . '-wordpress-theme.zip';
 
+    // v3.3.1: default = the installable inner theme zip; ?file=bundle = the
+    // original full bundle (theme zip + data/ WXR + product CSV exports).
+    $variant = (string) ($_GET['file'] ?? 'install');
+    if ($variant === 'bundle') {
+        $download_name = strtolower($safe_slug) . '-full-bundle.zip';
+    } else {
+        $install_zip = b442_materialize_install_zip($real_zip);
+        if ($install_zip !== '') {
+            $real_zip = $install_zip;
+        } else {
+            // No inner zip found (unknown/legacy layout) — serve the stored
+            // file unchanged rather than failing the download.
+            error_log('[B442WP] Install unwrap: no inner theme zip found in ' . $real_zip . ' — serving stored file as-is');
+        }
+    }
+
     if (ob_get_level()) {
         ob_end_clean();
     }
@@ -128,6 +210,7 @@ $has_woocommerce = !empty($conversion['has_woocommerce']);
 $completed_at    = (string) ($conversion['completed_at'] ?? $conversion['created_at'] ?? '');
 $price_cents     = (int) ($conversion['price_cents'] ?? 0);
 $download_url    = base_url('/download/' . $uuid . '?action=download');
+$bundle_url      = base_url('/download/' . $uuid . '?action=download&file=bundle');
 
 // Expiry warning levels
 $expiry_warn  = null;
@@ -178,7 +261,8 @@ ob_start();
                 An unexpected error occurred during your conversion.
                 <?php endif; ?>
             </p>
-            <a href="mailto:<?= htmlspecialchars((string) config('contact_email', 'support@base44towordpress.com'), ENT_QUOTES, 'UTF-8') ?>?subject=Conversion+Failed+<?= urlencode($uuid) ?>"
+            <a href="<?= htmlspecialchars(support_ticket_url('My conversion failed. Conversion reference: ' . $uuid), ENT_QUOTES, 'UTF-8') ?>"
+               target="_blank" rel="noopener"
                class="btn btn--primary">
                 Contact Support
             </a>
@@ -330,14 +414,16 @@ ob_start();
                 If this thing isn't what you expected, I want to know.
             </p>
             <p style="margin:0 0 1rem;font-size:0.9375rem;color:#334155;line-height:1.7;">
-                <a href="mailto:<?= htmlspecialchars((string) config('contact_email', 'support@base44towordpress.com'), ENT_QUOTES, 'UTF-8') ?>?subject=Refund+request+<?= urlencode(substr($uuid, 0, 8)) ?>"
-                   class="link" style="color:#2563eb;font-weight:500;">Send me an email</a>
+                <a href="<?= htmlspecialchars(support_ticket_url('Refund request. Order or conversion reference: ' . substr($uuid, 0, 8)), ENT_QUOTES, 'UTF-8') ?>"
+                   target="_blank" rel="noopener"
+                   class="link" style="color:#2563eb;font-weight:500;">Send me a ticket</a>
                 and I'll give you your money back. No questions, no forms, just done.
             </p>
             <p style="margin:0;font-size:0.875rem;color:#64748b;line-height:1.6;">
                 Found a bug or something looks off?
-                <a href="mailto:<?= htmlspecialchars((string) config('contact_email', 'support@base44towordpress.com'), ENT_QUOTES, 'UTF-8') ?>?subject=Bug+report+<?= urlencode(substr($uuid, 0, 8)) ?>"
-                   class="link" style="color:#2563eb;">Tell me that too</a> — I actually want to fix it.
+                <a href="<?= htmlspecialchars(support_ticket_url('Bug report. What went wrong: ' . substr($uuid, 0, 8)), ENT_QUOTES, 'UTF-8') ?>"
+                   target="_blank" rel="noopener"
+                   class="link" style="color:#2563eb;">Tell me that too</a>, I actually want to fix it.
             </p>
         </div>
 
@@ -374,7 +460,11 @@ ob_start();
                     <span class="install-guide__num" aria-hidden="true">4</span>
                     <div>
                         <strong>Import demo content</strong><br>
-                        Go to <em>Tools &rarr; Import</em> to bring in sample pages and products.
+                        Go to <em>Tools &rarr; Import &rarr; WordPress</em> and upload
+                        <code>inc/content-import.xml</code> from inside the theme folder
+                        (also available in the
+                        <a href="<?= htmlspecialchars($bundle_url, ENT_QUOTES, 'UTF-8') ?>" class="link">full export bundle</a>
+                        together with a WooCommerce product CSV).
                     </div>
                 </li>
                 <li class="install-guide__step">
@@ -390,8 +480,10 @@ ob_start();
                     <span class="install-guide__num" aria-hidden="true">3</span>
                     <div>
                         <strong>Import demo content</strong><br>
-                        Go to <em>Tools &rarr; Import</em> to bring in sample pages
-                        included with the theme.
+                        Go to <em>Tools &rarr; Import &rarr; WordPress</em> and upload
+                        <code>inc/content-import.xml</code> from inside the theme folder
+                        (also available in the
+                        <a href="<?= htmlspecialchars($bundle_url, ENT_QUOTES, 'UTF-8') ?>" class="link">full export bundle</a>).
                     </div>
                 </li>
                 <li class="install-guide__step">
@@ -407,7 +499,8 @@ ob_start();
 
             <p class="install-guide__support">
                 Need help installing?
-                <a href="mailto:<?= htmlspecialchars((string) config('contact_email', 'support@base44towordpress.com'), ENT_QUOTES, 'UTF-8') ?>?subject=Install+Help+<?= urlencode(substr($uuid, 0, 8)) ?>"
+                <a href="<?= htmlspecialchars(support_ticket_url('Install help. Where I am stuck: ' . substr($uuid, 0, 8)), ENT_QUOTES, 'UTF-8') ?>"
+                   target="_blank" rel="noopener"
                    class="link">Contact support</a>.
             </p>
         </div>
